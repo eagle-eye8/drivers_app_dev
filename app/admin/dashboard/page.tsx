@@ -5,11 +5,12 @@ import Link from "next/link";
 import { useState } from "react";
 import { ORDER_STATUS_META } from "@/lib/orderStatus";
 import { KANBAN_COLUMNS } from "@/lib/kanbanColumns";
-import { OrderWithCustomer } from "@/types/orderWithCustomer";
+import { DashboardEmployee, OrderWithCustomer } from "@/types/orderWithCustomer";
 import { LoadingOverlay } from "@/components/ui/LoadingOverlay";
 import Button from "@/components/ui/button";
 import { PlusIcon } from "lucide-react";
 import CreateOrderModal from "@/components/orders/CreateOrderModal";
+import { Employee } from "@/types/employee";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -77,7 +78,7 @@ export default function AdminDashboardPage() {
               <div key={col.id} className={`min-w-[260px] rounded-xl border p-4 bg-white shadow-sm ${ORDER_STATUS_META[col.id].columnClass ?? ""}`}>
                 <h3 className="font-semibold mb-3 flex justify-between">
                   {col.title}
-                  <span className="text-sm text-gray-500">{orders.length}</span>
+                  <span className="text-sm text-gray-500">{`${orders.length}件`}</span>
                 </h3>
 
                 <div className="space-y-2">
@@ -87,7 +88,7 @@ export default function AdminDashboardPage() {
                         <div className="font-medium text-sm">{order.customer?.name ?? "不明"}</div>
                         <span className={`text-xs px-2 py-0.5 rounded-full ${ORDER_STATUS_META[order.status].badgeClass}`}>{ORDER_STATUS_META[order.status].label}</span>
                       </div>
-                      <div className="text-xs text-gray-500 mt-1">¥{order.amount.toLocaleString()}</div>
+                      {col.id === "completed" && <div className="text-xs text-gray-500 mt-1">{`¥${order.amount.toLocaleString()}`}</div>}
                     </div>
                   ))}
                 </div>
@@ -102,10 +103,10 @@ export default function AdminDashboardPage() {
         <h2 className="text-xl font-bold">従業員タスク</h2>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {employees.map((emp: any) => (
+          {employees.map((emp: DashboardEmployee) => (
             <Link key={emp.id} href={`/admin/orders/${emp.id}?date=${today}`} className="rounded-2xl bg-white border p-4 shadow hover:shadow-md">
               <div className="font-semibold">{emp.name}</div>
-              <div className="text-sm text-gray-500 mt-1">担当 {emp.orderCount ?? 0} 件</div>
+              <div className="text-sm text-gray-500 mt-1">担当 {emp.assignedOrderCount ?? 0} 件</div>
             </Link>
           ))}
         </div>

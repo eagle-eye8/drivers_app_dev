@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { adminAuth, adminDb } from "@/lib/firebaseAdmin";
 import { FieldPath, Timestamp } from "firebase-admin/firestore";
+import { DashboardEmployee } from "@/types/orderWithCustomer";
+import { Order } from "@/types/order";
 
 // --- 🔁 customers を 10 件ずつバッチで取得する関数（外に出す） ---
 async function fetchCustomersInBatches(ids: string[], db: FirebaseFirestore.Firestore) {
@@ -108,7 +110,7 @@ export async function GET() {
     });
 
     // --- 📅 今日の Orders ---
-    const todayOrdersRaw = orders.filter((o) => getJstDateKey(o.reservationDate.toDate()) === todayKey);
+    const todayOrdersRaw: Order[] = orders.filter((o) => getJstDateKey(o.reservationDate.toDate()) === todayKey);
 
     // --- 🔁 customers を 10 件ずつ取得 ---
     const customerSnaps = await adminDb.collection("customers").get();
@@ -146,11 +148,25 @@ export async function GET() {
       ...(d.data() as any),
     }));
 
+    const orderCountByEmployee = new Map<string, number>();
+
+    todayOrders.forEach((order) => {
+      const emp = order.assignedUid;
+      if (!emp) return;
+      orderCountByEmployee.set(emp, (orderCountByEmployee.get(emp) ?? 0) + 1);
+    });
+
+    const dashboardEmployees: DashboardEmployee[] = employees.map((emp) => ({
+      id: emp.id,
+      name: emp.name,
+      assignedOrderCount: orderCountByEmployee.get(emp.id) ?? 0,
+    }));
+
     return NextResponse.json({
       success: true,
       data: {
         todayOrders,
-        employees,
+        employees: dashboardEmployees,
         customers,
         kpi: {
           orderCount,

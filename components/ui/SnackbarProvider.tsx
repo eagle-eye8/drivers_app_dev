@@ -1,9 +1,9 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode } from "react";
-import { CheckCircle, XCircle, Info } from "lucide-react";
+import { createContext, useContext, useState, ReactNode, useRef, useCallback } from "react";
+import { CheckCircle, XCircle, Info, AlertTriangle } from "lucide-react";
 
-type SnackbarType = "success" | "error" | "info";
+type SnackbarType = "success" | "error" | "warning" | "info";
 
 type SnackbarState = {
   message: string;
@@ -17,28 +17,43 @@ const SnackbarContext = createContext<{
 export function SnackbarProvider({ children }: { children: ReactNode }) {
   const [snackbar, setSnackbar] = useState<SnackbarState | null>(null);
 
-  const showSnackbar = (message: string, type: SnackbarType = "info") => {
-    setSnackbar({ message, type });
-    setTimeout(() => setSnackbar(null), 3000);
-  };
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  const showSnackbar = useCallback((message: string, type: SnackbarType = "info") => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    setSnackbar({ message, type });
+
+    timeoutRef.current = setTimeout(() => {
+      setSnackbar(null);
+      timeoutRef.current = null;
+    }, 3000);
+  }, []);
+  const bgClass = snackbar
+    ? {
+        success: "bg-green-500",
+        error: "bg-red-500",
+        warning: "bg-amber-500",
+        info: "bg-slate-700",
+      }[snackbar.type]
+    : "";
   return (
     <SnackbarContext.Provider value={{ showSnackbar }}>
       {children}
 
       {snackbar && (
         <div className="fixed bottom-6 right-6 z-50 animate-slide-in">
-          <div
-            className={`flex items-center gap-3 px-5 py-3 rounded-xl shadow-xl text-white
-              ${snackbar.type === "success" && "bg-green-500"}
-              ${snackbar.type === "error" && "bg-red-500"}
-              ${snackbar.type === "info" && "bg-slate-700"}
-            `}
-          >
+          <div className={`flex items-center gap-3 px-5 py-3 rounded-xl shadow-xl text-white ${bgClass}`}>
             {snackbar.type === "success" && <CheckCircle />}
             {snackbar.type === "error" && <XCircle />}
+            {snackbar.type === "warning" && <AlertTriangle />}
             {snackbar.type === "info" && <Info />}
             <span className="font-medium">{snackbar.message}</span>
+            <button onClick={() => setSnackbar(null)} className="ml-2 opacity-70 hover:opacity-100">
+              ✕
+            </button>
           </div>
         </div>
       )}

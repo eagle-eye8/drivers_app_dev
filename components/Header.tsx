@@ -1,13 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
-import { onAuthStateChanged, signOut, User } from "firebase/auth";
+import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { usePathname } from "next/navigation";
-
-// Heroicons
-import { HomeIcon, ClipboardDocumentListIcon, UserIcon, PlusIcon } from "@heroicons/react/24/outline";
-import Button from "./ui/button";
-import CreateOrderModal from "./orders/CreateOrderModal";
+import { HomeIcon, ClipboardDocumentListIcon, UserIcon } from "@heroicons/react/24/outline";
 
 // NavItem 型
 type NavItem = {
@@ -22,35 +18,35 @@ const navItems: NavItem[] = [
   { label: "集荷リスト", href: "/admin/orders", icon: ClipboardDocumentListIcon },
 ];
 
+type User = {
+  uid: string;
+  name: string;
+  admin: boolean;
+};
 export default function Header() {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User>();
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
-  const [open, setOpen] = useState(false);
-  useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (user) => setUser(user));
-    return () => unsub();
-  }, []);
 
+  const [authState, setAuthState] = useState<"loading" | "authenticated" | "unauthenticated">("loading");
+
+  useEffect(() => {
+    fetch("/api/auth/check-admin", { credentials: "include" })
+      .then((res) => {
+        if (res.ok) {
+          setAuthState("authenticated");
+        } else {
+          setAuthState("unauthenticated");
+        }
+      })
+      .catch(() => setAuthState("unauthenticated"));
+  }, []);
   return (
     <header className="w-full flex items-center justify-between px-6 py-4 bg-white border-b border-gray-200">
       <div className="flex items-center gap-6">
         <div className="text-xl font-semibold text-gray-700">Spirit</div>
         {/* Sign Out */}
-        {user ? (
-          <button onClick={() => signOut(auth)} className="hidden md:block px-4 py-2 text-gray rounded hover:bg-gray-300 border-1">
-            <div className="flex items-center gap-2">
-              <UserIcon className="w-4 h-4 mr-1" />
-              {`${user.displayName}でログイン中`}
-            </div>
-          </button>
-        ) : (
-          <a href="/signin" className="px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-700">
-            サインイン
-          </a>
-        )}
       </div>
-
       <div className="flex items-center gap-4">
         {/* PCナビ */}
         {user && (
@@ -60,14 +56,7 @@ export default function Header() {
               const isActive = pathname.startsWith(item.href);
 
               return (
-                <a
-                  key={item.href}
-                  href={item.href}
-                  className={`flex items-center gap-2 pb-1
-                    hover:text-gray-900 transition
-                    ${isActive ? "text-gray-900 font-semibold border-b-2 border-gray-900" : ""}
-                  `}
-                >
+                <a key={item.href} href={item.href} className={`flex items-center gap-2 pb-1 hover:text-gray-900 transition ${isActive ? "text-gray-900 font-semibold border-b-2 border-gray-900" : ""}`}>
                   <Icon className={`w-5 h-5 ${isActive ? "text-gray-900" : "text-gray-600"}`} />
                   {item.label}
                 </a>
@@ -76,7 +65,7 @@ export default function Header() {
           </nav>
         )}
         {/* ハンバーガー（スマホ） */}
-        {user && (
+        {authState === "authenticated" && (
           <button onClick={() => setMenuOpen(true)} className="md:hidden p-2 rounded hover:bg-gray-100">
             <div className="space-y-1">
               <span className="block w-6 h-0.5 bg-gray-600"></span>
@@ -88,7 +77,7 @@ export default function Header() {
       </div>
 
       {/* スライドメニュー（スマホ） */}
-      {menuOpen && user && (
+      {menuOpen && authState === "authenticated" && (
         <div className="fixed inset-0 bg-black bg-opacity-40" onClick={() => setMenuOpen(false)}>
           <div className="absolute right-0 top-0 h-full w-64 bg-white p-6 shadow-lg" onClick={(e) => e.stopPropagation()}>
             <div className="text-lg font-semibold mb-6">Menu</div>
