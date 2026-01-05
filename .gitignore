@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# firestoreダミーデータ作成用
+serviceAccountKey.json
+
+# バックエンドの秘密鍵
+firebase-service-account.json
