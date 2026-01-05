@@ -10,9 +10,9 @@ import { DraggableOrder } from "@/components/dnd/DraggableOrder";
 import { UnassignedDrop } from "@/components/dnd/UnassignedDrop";
 import { Employee } from "@/types/employee";
 
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 export default function AssignBoardPage() {
+  const fetcher = (url: string) => fetch(url).then((r) => r.json());
   /* ================= Data ================= */
   const { data, isLoading } = useSWR("/api/dashboard", fetcher);
   const [collapsedCompleted, setCollapsedCompleted] = useState(true);
