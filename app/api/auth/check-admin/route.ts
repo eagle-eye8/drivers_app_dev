@@ -14,6 +14,7 @@ export async function GET() {
     return NextResponse.json({
       admin: decoded.admin === true,
       uid: decoded.uid,
+      name: decoded.name || decoded.email,
     });
   } catch (err) {
     console.error("check-admin error:", err);

@@ -1,8 +1,8 @@
 "use server";
 
-import { cookies } from "next/headers";
+import router from "next/router";
 
 export async function logoutAction() {
-  const cookieStore = await cookies(); // ← 必須！
-  cookieStore.delete("__session");
+  await fetch("/api/auth/logout", { method: "POST" });
+  router.replace("/signin");
 }
