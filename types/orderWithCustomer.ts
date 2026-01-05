@@ -7,6 +7,12 @@ export type AssignedEmployee = {
   name: string;
 };
 
+export type DashboardEmployee = {
+  id: string;
+  name: string;
+  assignedOrderCount: number;
+};
+
 export type OrderWithCustomer = Order & {
   customer: Customer | null;
   assignedEmployee?: AssignedEmployee | null;

@@ -18,17 +18,12 @@ export async function POST(request: Request) {
       reservationDate,
       notes: notes ?? "",
       pickupWindow: pickupWindow ?? null,
-
       amount,
       paymentStatus: "unpaid",
-
       status: assignedUid ? "assigned" : "pending",
-
       items,
       isMerged: true,
-
       routeGroupId,
-
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     };

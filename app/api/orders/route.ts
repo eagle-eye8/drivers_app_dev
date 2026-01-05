@@ -114,15 +114,13 @@ export async function POST(req: Request) {
 
     const routeGroupId = `${customerId}-${reservationDate}`;
 
-    const reservationTs = Timestamp.fromDate(
-      jstMidnightFromDateString(reservationDate)
-    );
+    const reservationTs = Timestamp.fromDate(jstMidnightFromDateString(reservationDate));
     const order = {
       customerId,
       assignedUid: assignedUid || null,
       reservationDate: reservationTs,
       routeGroupId,
-      status: "pending",
+      status: assignedUid ? "assigned" : "pending",
       amount: 0,
       paymentStatus: "unpaid",
       items: [kind === "heavy" ? { kind, to: "tokyo", quantity } : { kind, to: "tokyo", size: 60, quantity }],
