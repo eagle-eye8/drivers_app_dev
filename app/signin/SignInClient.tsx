@@ -1,7 +1,14 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, User } from "firebase/auth";
+import { 
+  signInWithEmailAndPassword, 
+  GoogleAuthProvider, 
+  signInWithPopup, 
+  signInWithRedirect, // 追加
+  getRedirectResult,  // 追加
+  User 
+} from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSnackbar } from "@/components/ui/SnackbarProvider";
@@ -17,30 +24,27 @@ export default function SignInClient() {
   const reason = params.get("reason");
   const { showSnackbar } = useSnackbar();
   const shownRef = useRef(false);
-  useEffect(() => {
-    if (reason === "session_expired" && !shownRef.current) {
-      shownRef.current = true;
-      showSnackbar("一定時間操作がなかったため、再ログインが必要です", "warning");
-      const url = new URL(window.location.href);
-      url.searchParams.delete("reason");
-      window.history.replaceState({}, "", url.toString());
-    }
-  }, [reason, showSnackbar]); // ---------------------
-  // 🔥 Admin チェック共通関数
+
+  // ---------------------
+  // 🔥 共通：ログイン後のリダイレクト処理
   // ---------------------
   const handleRedirectAfterLogin = async (user: User) => {
     try {
       const token = await user.getIdToken();
-      // ① token を取得して session cookie 保存
+      
+      // ① session cookie 保存
       const res = await fetch("/api/auth/set-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token: token }),
       });
+
       if (!res.ok) {
         setError("ログインセッションの作成に失敗しました");
         return;
-      } // ② SSR 経由で admin 判定
+      }
+
+      // ② SSR 経由で admin 判定
       const adminRes = await fetch("/api/auth/check-admin");
       if (!adminRes.ok) {
         setError("権限チェックに失敗しました");
@@ -61,6 +65,38 @@ export default function SignInClient() {
   };
 
   // ---------------------
+  // 🔥 追加：リダイレクトから戻ってきた時の処理
+  // ---------------------
+  useEffect(() => {
+    const checkRedirectResult = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result?.user) {
+          setLoading(true);
+          await handleRedirectAfterLogin(result.user);
+        }
+      } catch (err: any) {
+        console.error(err);
+        setError("Googleログイン中にエラーが発生しました");
+      } finally {
+        setLoading(false);
+      }
+    };
+    checkRedirectResult();
+  }, []);
+
+  // セッション切れの通知
+  useEffect(() => {
+    if (reason === "session_expired" && !shownRef.current) {
+      shownRef.current = true;
+      showSnackbar("一定時間操作がなかったため、再ログインが必要です", "warning");
+      const url = new URL(window.location.href);
+      url.searchParams.delete("reason");
+      window.history.replaceState({}, "", url.toString());
+    }
+  }, [reason, showSnackbar]);
+
+  // ---------------------
   // Email SignIn
   // ---------------------
   const handleEmailSignIn = async (e: React.FormEvent) => {
@@ -73,24 +109,33 @@ export default function SignInClient() {
       await handleRedirectAfterLogin(userCredential.user);
     } catch (err: any) {
       setError(err.message);
-    } finally {
       setLoading(false);
     }
   };
 
   // ---------------------
-  // Google SignIn
+  // Google SignIn (スマホ対応版)
   // ---------------------
   const handleGoogleSignIn = async () => {
     setError("");
-    setLoading(true);
+    const provider = new GoogleAuthProvider();
+    
+    // モバイル端末かどうかを簡易判定
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
     try {
-      const result = await signInWithPopup(auth, new GoogleAuthProvider());
-      await handleRedirectAfterLogin(result.user);
+      if (isMobile) {
+        // スマホの場合はリダイレクト方式（ポップアップブロックを回避）
+        setLoading(true); // 遷移前にローディング表示
+        await signInWithRedirect(auth, provider);
+      } else {
+        // PCの場合はポップアップ方式
+        setLoading(true);
+        const result = await signInWithPopup(auth, provider);
+        await handleRedirectAfterLogin(result.user);
+      }
     } catch (err: any) {
       setError(err.message);
-    } finally {
       setLoading(false);
     }
   };
@@ -120,17 +165,17 @@ export default function SignInClient() {
             </button>
           </form>
 
-          <button type="button" onClick={handleGoogleSignIn} className="w-full flex items-center justify-center gap-2 border py-2 rounded-lg mt-4">
-            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5" />
+          <button type="button" onClick={handleGoogleSignIn} disabled={loading} className="w-full flex items-center justify-center gap-2 border py-2 rounded-lg mt-4">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5" alt="Google" />
             Continue with Google
           </button>
 
           <div className="mt-6 text-center text-sm space-y-2">
-            <a href="/reset-password" className="text-blue-600 hover:underline">
+            <a href="/reset-password" disposable-label="true" className="text-blue-600 hover:underline">
               パスワードをお忘れですか？
             </a>
             <div>
-              <a href="/signup" className="text-blue-600 hover:underline">
+              <a href="/signup" disposable-label="true" className="text-blue-600 hover:underline">
                 新規登録はこちら
               </a>
             </div>
