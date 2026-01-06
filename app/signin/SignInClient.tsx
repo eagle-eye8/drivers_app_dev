@@ -1,14 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { 
-  signInWithEmailAndPassword, 
-  GoogleAuthProvider, 
-  signInWithPopup, 
-  signInWithRedirect, // 追加
-  getRedirectResult,  // 追加
-  User 
-} from "firebase/auth";
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, User } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSnackbar } from "@/components/ui/SnackbarProvider";
@@ -31,7 +24,7 @@ export default function SignInClient() {
   const handleRedirectAfterLogin = async (user: User) => {
     try {
       const token = await user.getIdToken();
-      
+
       // ① session cookie 保存
       const res = await fetch("/api/auth/set-session", {
         method: "POST",
@@ -119,7 +112,7 @@ export default function SignInClient() {
   const handleGoogleSignIn = async () => {
     setError("");
     const provider = new GoogleAuthProvider();
-    
+
     // モバイル端末かどうかを簡易判定
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
