@@ -1,13 +1,13 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { 
-  signInWithEmailAndPassword, 
-  GoogleAuthProvider, 
-  signInWithPopup, 
+import {
+  signInWithEmailAndPassword,
+  GoogleAuthProvider,
+  signInWithPopup,
   signInWithRedirect, // 追加
-  getRedirectResult,  // 追加
-  User 
+  getRedirectResult, // 追加
+  User,
 } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -31,7 +31,7 @@ export default function SignInClient() {
   const handleRedirectAfterLogin = async (user: User) => {
     try {
       const token = await user.getIdToken();
-      
+
       // ① session cookie 保存
       const res = await fetch("/api/auth/set-session", {
         method: "POST",
@@ -43,16 +43,22 @@ export default function SignInClient() {
         setError("ログインセッションの作成に失敗しました");
         return;
       }
-
+      const data = await res.json();
       // ② SSR 経由で admin 判定
-      const adminRes = await fetch("/api/auth/check-admin");
-      if (!adminRes.ok) {
-        setError("権限チェックに失敗しました");
-        return;
-      }
+      // const adminRes = await fetch("/api/auth/check-admin");
+      // if (!adminRes.ok) {
+      //   setError("権限チェックに失敗しました");
+      //   return;
+      // }
 
-      const data = await adminRes.json();
+      // const data = await adminRes.json();
 
+      // if (data.admin) {
+      //   router.replace("/admin/dashboard");
+      // } else {
+      //   router.replace(`/orders/${user.uid}`);
+      // }
+      // ② data.admin を直接見てリダイレクト
       if (data.admin) {
         router.replace("/admin/dashboard");
       } else {
@@ -119,7 +125,7 @@ export default function SignInClient() {
   const handleGoogleSignIn = async () => {
     setError("");
     const provider = new GoogleAuthProvider();
-    
+
     // モバイル端末かどうかを簡易判定
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
