@@ -17,50 +17,60 @@ const AuthContext = createContext<AuthContextType>({
 });
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<SigninUser | null>(null);
+  const [signinUser, setSigninUser] = useState<SigninUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // onAuthStateChanged の中で最新の firebaseUser を受け取るため、
+    // コンポーネントトップレベルでの auth.currentUser 参照は不要です。
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (!firebaseUser) {
-        setUser(null);
-        setLoading(false);
-        return;
-      }
-
-      // ⚡️ STEP 1: 【最速】カスタムクレームだけで「権限」を確定させる
-      const tokenResult = await firebaseUser.getIdTokenResult();
-      const isAdmin = !!tokenResult.claims.admin;
-
-      // この時点で一旦、最低限の情報をセットして「loading」を解除する
-      // これにより、ダッシュボードのガードを即座にパスできる
-      const baseUser: SigninUser = {
-        uid: firebaseUser.uid,
-        email: firebaseUser.email || "",
-        name: isAdmin ? "管理者" : firebaseUser.displayName || "読み込み中...",
-        role: isAdmin ? "admin" : "staff",
-      };
-
-      setUser(baseUser);
-      setLoading(false); // 🚀 ここで画面表示を許可！
-
-      // ⚡️ STEP 2: 【遅延】Firestoreから追加の詳細情報を取得（バックグラウンド）
-      // これが遅くても、画面はすでに表示されているのでユーザーは待たされない
       try {
+        if (!firebaseUser) {
+          setSigninUser(null);
+          setLoading(false);
+          return;
+        }
+
+        // ⚡️ STEP 1: カスタムクレームから権限を取得
+        const tokenResult = await firebaseUser.getIdTokenResult();
+        const isAdmin = !!tokenResult.claims.admin;
+
+        // 初期表示用のユーザーオブジェクトを作成
+        // name が null の可能性があるため、空文字かメールアドレスをフォールバックに使う
+        const baseUser: SigninUser = {
+          uid: firebaseUser.uid,
+          email: firebaseUser.email || "",
+          name: firebaseUser.displayName ?? firebaseUser.email?.split("@")[0] ?? "Unknown User",
+          role: isAdmin ? "admin" : "staff",
+        };
+
+        setSigninUser(baseUser);
+        setLoading(false); // 🚀 STEP 1完了時点で表示を許可
+
+        // ⚡️ STEP 2: Firestore から詳細情報（正しい表示名など）をバックグラウンドで取得
         const snap = await getDoc(doc(db, "employees", firebaseUser.uid));
         if (snap.exists()) {
           const employeeData = snap.data();
-          setUser((prev) => (prev ? { ...prev, name: employeeData.name } : null));
+          setSigninUser((prev) => (prev ? { 
+            ...prev, 
+            name: employeeData.name || prev.name 
+          } : null));
         }
       } catch (e) {
-        console.warn("Firestore data fetch failed in background", e);
-        // 管理者ならFirestoreが失敗しても何の問題もない
+        console.error("Auth process error:", e);
+        setLoading(false);
       }
     });
 
     return () => unsubscribe();
   }, []);
-  return <AuthContext.Provider value={{ user, loading }}>{children}</AuthContext.Provider>;
+
+  // Contextに渡す値を signinUser に修正
+  return (
+    <AuthContext.Provider value={{ user: signinUser, loading }}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
 export const useAuth = () => useContext(AuthContext);

@@ -9,7 +9,7 @@ import { KANBAN_COLUMNS } from "@/lib/kanbanColumns";
 import { DashboardEmployee, OrderWithCustomer } from "@/types/orderWithCustomer";
 import { LoadingOverlay } from "@/components/ui/LoadingOverlay";
 import Button from "@/components/ui/button";
-import { PlusIcon, ArrowRight } from "lucide-react"; // アイコン追加
+import { PlusIcon, ArrowRight, ShieldCheck, UserIcon } from "lucide-react"; // アイコン追加
 import CreateOrderModal from "@/components/orders/CreateOrderModal";
 import { useAuth } from "@/app/providers/AuthProvider";
 import ProgressCircle from "@/components/ui/ProgressCircle";
@@ -22,7 +22,7 @@ export default function AdminDashboardPage() {
   const today = getJstDateString();
   const { user, loading: authLoading } = useAuth();
   const [isOpen, setOpen] = useState(false);
-
+  const isAdmin = user?.role === "admin";
   // APIフェッチ条件
   const shouldFetch = !authLoading && user?.role === "admin";
   const { data, error, isLoading } = useSWR(shouldFetch ? `/api/dashboard?date=${today}` : null, fetcher);
@@ -44,9 +44,17 @@ export default function AdminDashboardPage() {
       {/* ================= HEADER & PROGRESS ================= */}
       <header className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 flex flex-col justify-center space-y-4">
-          <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">
-            Good Morning, <span className="text-blue-600">{user.name}</span>
-          </h1>
+          <div className="flex items-center gap-4 py-6">
+            {/* アイコン部分 */}
+            <div className={`p-3 rounded-2xl shadow-sm ${isAdmin ? "bg-blue-50 text-blue-600 border border-blue-100" : "bg-slate-50 text-slate-600 border border-slate-100"}`}>{isAdmin ? <ShieldCheck size={32} strokeWidth={2.5} /> : <UserIcon size={32} strokeWidth={2.5} />}</div>
+            {/* テキスト部分 */}
+            <div>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-0.5">{isAdmin ? "Administrator" : "Staff Member"}</p>
+              <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight leading-none">
+                <span className="text-blue-500">{user?.name}</span>
+              </h1>
+            </div>
+          </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <Kpi title="本日の注文" value={kpi.orderCount} unit="件" />
             <Kpi title="未対応" value={kpi.pendingCount} unit="件" danger={kpi.pendingCount > 0} />

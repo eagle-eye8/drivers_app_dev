@@ -82,7 +82,6 @@ export default function AssignBoardPage() {
       {/* ================= Header ================= */}
       <header className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">アサインボード</h1>
-
         {unassignedOrders.length > 0 && <span className="text-sm bg-red-600 text-white px-3 py-1 rounded-full">未対応 {unassignedOrders.length} 件</span>}
       </header>
       <section className="space-y-4">
