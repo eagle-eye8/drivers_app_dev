@@ -63,7 +63,6 @@ export default function AdminDashboardPage() {
             {/* スタッフ数の代わりに完了数を配置 */}
           </div>
         </div>
-
         {/* メイン進捗リング：一番目立つ場所へ */}
         <div className="bg-white rounded-3xl p-6 shadow-xl shadow-blue-100/50 border border-white flex items-center justify-around relative overflow-hidden">
           <div className="absolute top-0 right-0 p-3 opacity-5">
