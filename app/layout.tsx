@@ -4,6 +4,7 @@ import "./globals.css";
 import Header from "@/components/Header";
 import { ToastProvider } from "@/components/toast/ToastProvider";
 import { SnackbarProvider } from "@/components/ui/SnackbarProvider";
+import { AuthProvider } from "./providers/AuthProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,10 +29,12 @@ export default function RootLayout({
   return (
     <html lang="ja">
       <body>
-        <Header />
-        <ToastProvider>
-          <SnackbarProvider>{children}</SnackbarProvider>
-        </ToastProvider>
+        <AuthProvider>
+          <Header />
+          <ToastProvider>
+            <SnackbarProvider>{children}</SnackbarProvider>
+          </ToastProvider>
+        </AuthProvider>
       </body>
     </html>
   );

@@ -10,55 +10,60 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const date = searchParams.get("date"); // YYYY-MM-DD (JST)
     const status = searchParams.get("status");
+    const uid = searchParams.get("uid"); // ★ 従業員IDを取得
 
     let query: FirebaseFirestore.Query = adminDb.collection("orders");
 
+    // 日付での絞り込み
     if (date) {
       const from = new Date(`${date}T00:00:00+09:00`);
       const to = new Date(from);
       to.setDate(from.getDate() + 1);
-
-      query = query.where("reservationDate", ">=", Timestamp.fromDate(from)).where("reservationDate", "<", Timestamp.fromDate(to));
+      query = query.where("reservationDate", ">=", Timestamp.fromDate(from))
+                   .where("reservationDate", "<", Timestamp.fromDate(to));
     }
 
+    // ステータスでの絞り込み
     if (status) {
       query = query.where("status", "==", status);
     }
 
-    const snap = await query.orderBy("createdAt", "asc").get();
+    // ★ 従業員IDでの絞り込みを追加
+    if (uid) {
+      query = query.where("assignedUid", "==", uid);
+    }
+
+    // インデックス設定に合わせてソート（reservationDateとassignedUidを混ぜる場合は複合インデックスが必要になる場合があります）
+    const snap = await query.orderBy("reservationDate", "asc").get();
 
     /* ======================
-       customers join
+       customers join (バッチ取得)
     ====================== */
     const customerIds = Array.from(new Set(snap.docs.map((d) => d.data().customerId).filter(Boolean)));
-
     const customersMap = new Map<string, any>();
 
     if (customerIds.length > 0) {
       const customerSnaps = await adminDb.getAll(...customerIds.map((id) => adminDb.collection("customers").doc(id)));
-
       customerSnaps.forEach((c) => {
         if (c.exists) customersMap.set(c.id, c.data());
       });
     }
 
     /* ======================
-       employees join
+       employees join (バッチ取得)
     ====================== */
     const employeeIds = Array.from(new Set(snap.docs.map((d) => d.data().assignedUid).filter(Boolean)));
-
     const employeesMap = new Map<string, any>();
 
     if (employeeIds.length > 0) {
       const employeeSnaps = await adminDb.getAll(...employeeIds.map((id) => adminDb.collection("employees").doc(id)));
-
       employeeSnaps.forEach((e) => {
         if (e.exists) employeesMap.set(e.id, e.data());
       });
     }
 
     /* ======================
-       build response
+       build response (マッピング)
     ====================== */
     const orders: OrderWithCustomer[] = snap.docs.map((doc) => {
       const data = doc.data();
@@ -71,17 +76,15 @@ export async function GET(req: Request) {
         reservationDate: data.reservationDate,
         routeGroupId: data.routeGroupId,
         status: data.status,
-        amount: data.amount,
+        amount: data.amount ?? 0,
         paymentStatus: data.paymentStatus,
         notes: data.notes,
         pickupWindow: data.pickupWindow,
-        items: data.items,
+        items: data.items || [],
         isMerged: data.isMerged,
         deliveryOrder: data.deliveryOrder ?? 0,
-
         createdAt: data.createdAt?.toMillis?.() ?? 0,
         updatedAt: data.updatedAt?.toMillis?.() ?? 0,
-
         customer: customer
           ? {
               id: data.customerId,
@@ -89,12 +92,12 @@ export async function GET(req: Request) {
               address: customer.address,
               location: customer.location ?? null,
               createdAt: customer.createdAt?.toMillis?.() ?? 0,
-              updatedAt: data.updatedAt?.toMillis?.() ?? 0,
+              updatedAt: customer.updatedAt?.toMillis?.() ?? 0,
             }
           : null,
         assignedEmployee: {
           id: data.assignedUid ?? null,
-          name: employee?.name ?? null, // ★ 追加
+          name: employee?.name ?? null,
         },
       };
     });

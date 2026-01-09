@@ -141,7 +141,7 @@ export async function GET() {
     const pendingCount = todayOrders.filter((o) => o.status === "pending").length;
 
     // --- 👥 employees ---
-    const empSnap = await adminDb.collection("employees").where("active", "==", true).get();
+    const empSnap = await adminDb.collection("employees").where("isActive", "==", true).get();
 
     const employees = empSnap.docs.map((d) => ({
       id: d.id,
