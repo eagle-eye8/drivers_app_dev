@@ -45,3 +45,6 @@ serviceAccountKey.json
 
 # バックエンドの秘密鍵
 firebase-service-account.json
+
+node_modules/
+functions/node_modules/
