@@ -102,7 +102,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     if ("items" in body) {
       const items: OrderItem[] = body.items;
 
-      const priceVersion = "v2025_01";
+      const priceVersion = "v2026_01";
       const itemPricings = items.map((item) => calculateItemFee(item, priceVersion));
 
       const totalAmount = itemPricings.reduce((sum, p) => sum + p.subtotal, 0);

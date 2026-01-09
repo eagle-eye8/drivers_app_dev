@@ -1,56 +1,72 @@
 "use client";
 
-import { useState } from "react";
-import { Order } from "@/types/order";
-import { Prefecture } from "@/lib/constants/priceTable/index";
-import { Calculator, Package, Snowflake, Weight } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { Package, Snowflake, Weight, X, Search, Plus, Minus, ChevronRight } from "lucide-react";
 import { calculateItemFee } from "@/lib/utils/calculateItemFee";
 import { LoadingOverlay } from "../ui/LoadingOverlay";
-import { PRICE_TABLE } from "@/lib/constants/priceTable";
 import { useSnackbar } from "../ui/SnackbarProvider";
-type Props = {
-  order: Order;
-  onClose: () => void;
-  onCompleted: () => void;
-};
+import { AREA_GROUPS, AreaGroupKey, getPriceByGroup, PREF_TO_GROUP_MAP } from "@/lib/constants/priceTable/v2026_01";
 
-export function PickupModal({ order, onClose, onCompleted }: Props) {
-  // const [items, setItems] = useState<OrderItem[]>([(order.items)]);
+export function PickupModal({ order, onClose, onSuccess }: any) {
   const [loading, setLoading] = useState(false);
-  const [completed, setCompleted] = useState(false);
+  const [items, setItems] = useState<any[]>([]);
   const { showSnackbar } = useSnackbar();
-  const [items, setItems] = useState<OrderItem[]>([]);
+
+  // 入力状態
+  const [selectedGroup, setSelectedGroup] = useState<AreaGroupKey>("tohoku_kanto");
+  const [searchQuery, setSearchQuery] = useState("");
   const [kind, setKind] = useState<"normal" | "chilled" | "heavy">("normal");
-  const [prefecture, setPrefecture] = useState<Prefecture>("東京都");
   const [size, setSize] = useState<number>(60);
   const [quantity, setQuantity] = useState<number>(1);
 
-  const prefectures = Object.keys(PRICE_TABLE) as Prefecture[];
+  const itemsEndRef = useRef<HTMLDivElement>(null);
 
-  const addItem = () => {
-    if (kind === "heavy") {
-      setItems([...items, { kind: "heavy", to: prefecture, quantity }]);
-    } else if (kind === "normal") {
-      setItems([...items, { kind: "normal", to: prefecture, size: size as NormalSize, quantity }]);
-    } else {
-      setItems([...items, { kind: "chilled", to: prefecture, size: size as ChilledSize, quantity }]);
+  // 検索ヒット時にグループを自動切り替え
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    const matchedGroup = PREF_TO_GROUP_MAP[query];
+    if (matchedGroup) {
+      setSelectedGroup(matchedGroup);
     }
   };
 
-  const removeItem = (index: number) => {
-    setItems(items.filter((_, i) => i !== index));
+  // アイテム追加時のスクロール
+  useEffect(() => {
+    if (items.length > 0) {
+      itemsEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [items]);
+
+  const addItem = () => {
+    const feeInfo = calculateItemFee({
+      kind,
+      to: AREA_GROUPS[selectedGroup].label,
+      size: kind === "heavy" ? null : Number(size),
+      quantity: Number(quantity),
+    });
+
+    // ★ 0円またはエラーなら追加させない
+    if (feeInfo.subtotal === 0 || feeInfo.error) {
+      showSnackbar("このサイズ・種別の組み合わせは料金が設定されていません", "error");
+      return;
+    }
+
+    const item = {
+      kind,
+      to: AREA_GROUPS[selectedGroup].label,
+      size: kind === "heavy" ? null : Number(size),
+      quantity: Number(quantity),
+    };
+
+    setItems([...items, item]);
+    setQuantity(1); // 追加後に数量をリセット
+    setSearchQuery(""); // 検索窓もリセット
   };
 
   const totalFee = items.reduce((sum, item) => {
-    return sum + calculateItemFee(item, "v2025_01").subtotal;
+    // 内部でPREF_TO_GROUP_MAP等を参照して料金計算するようutils側が調整されている前提
+    return sum + calculateItemFee(item, "v2026_01").subtotal;
   }, 0);
-
-  const getSizeOptions = () => {
-    if (kind === "heavy") return [];
-    if (kind === "normal") return [60, 80, 100, 120, 140, 160, 170];
-    return [60, 80, 120, 140, 150];
-  };
-
   const handleComplete = async () => {
     setLoading(true);
     try {
@@ -63,8 +79,7 @@ export function PickupModal({ order, onClose, onCompleted }: Props) {
         }),
       });
       showSnackbar("集荷を完了しました", "success");
-      setCompleted(true);
-      onCompleted();
+      onSuccess();
       onClose();
     } catch {
       showSnackbar("登録に失敗しました", "error");
@@ -74,128 +89,142 @@ export function PickupModal({ order, onClose, onCompleted }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 md:flex md:items-center md:justify-center" onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()} className="bg-slate-900 text-white w-full h-full md:h-auto md:w-[95vw] md:max-w-6xl md:max-h-[90vh] md:rounded-2xl overflow-y-auto transition-all">
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white p-6">
-          <div className="max-w-5xl mx-auto">
-            <div className="text-center mb-8">
-              <div className="inline-flex items-center gap-3 mb-2">
-                <Calculator className="w-10 h-10 text-cyan-400" />
-                <h1 className="text-4xl font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">集荷項目セット</h1>
-              </div>
-            </div>
+    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md md:flex md:items-center md:justify-center" onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} className="bg-slate-900 text-white w-full h-full md:h-auto md:w-[95vw] md:max-w-5xl md:max-h-[92vh] md:rounded-[3rem] overflow-hidden border border-white/10 flex flex-col">
+        {/* Header */}
+        <div className="p-6 border-b border-white/5 flex justify-between items-center bg-slate-900/50">
+          <div>
+            <h1 className="text-xl font-black tracking-tighter text-cyan-400 italic">PICKUP TERMINAL</h1>
+            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Order ID: {order.id.slice(0, 8)}</p>
+          </div>
+          <button onClick={onClose} className="p-3 bg-slate-800 rounded-2xl active:scale-75 transition-all text-slate-400">
+            <X size={24} />
+          </button>
+        </div>
 
-            <div className="bg-slate-800/50 backdrop-blur rounded-2xl p-6 mb-6 border border-slate-700/50 shadow-2xl">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+        <div className="flex-1 overflow-y-auto p-6 md:p-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* 左側：入力設定 */}
+            <div className="space-y-6">
+              {/* 1. 配送先の検索と選択 */}
+              <section>
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-3 ml-1">1. Select Destination</label>
+                <div className="relative mb-3">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+                  <input type="text" placeholder="都道府県名を入力..." value={searchQuery} onChange={(e) => handleSearch(e.target.value)} className="w-full bg-slate-800 border-none rounded-2xl py-4 pl-12 pr-4 focus:ring-2 focus:ring-cyan-500 font-bold text-lg" />
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {Object.entries(AREA_GROUPS).map(([key, group]) => (
+                    <button key={key} onClick={() => setSelectedGroup(key as AreaGroupKey)} className={`py-3 rounded-xl text-[10px] font-black transition-all active:scale-95 border ${selectedGroup === key ? "bg-cyan-500 border-cyan-400 text-white shadow-lg shadow-cyan-500/20" : "bg-slate-800/50 border-white/5 text-slate-500"}`}>
+                      {group.label}
+                    </button>
+                  ))}
+                </div>
+                {/* スケルトン表示エリア */}
+                <div className="mt-3 p-3 bg-black/20 rounded-2xl border border-white/5 flex flex-wrap gap-1.5">
+                  {AREA_GROUPS[selectedGroup].prefs.map((pref) => (
+                    <span key={pref} className="text-[9px] px-2 py-0.5 bg-slate-800 text-slate-400 rounded-md animate-pulse">
+                      {pref}
+                    </span>
+                  ))}
+                </div>
+              </section>
+
+              {/* 2. 種別とサイズ */}
+              <section className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2 text-slate-300">配送方法</label>
-                  <div className="grid grid-cols-3 gap-2">
-                    <button onClick={() => setKind("normal")} className={`p-3 rounded-lg transition-all ${kind === "normal" ? "bg-cyan-500 text-white shadow-lg shadow-cyan-500/50" : "bg-slate-700/50 hover:bg-slate-700"}`}>
-                      <Package className="w-5 h-5 mx-auto mb-1" />
-                      <span className="text-xs block">普通</span>
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-3 ml-1">2. Type</label>
+                  <div className="flex gap-2">
+                    <button onClick={() => setKind("normal")} className={`flex-1 p-4 rounded-2xl active:scale-90 transition-all ${kind === "normal" ? "bg-cyan-500 text-white" : "bg-slate-800 text-slate-600"}`}>
+                      <Package className="mx-auto" />
                     </button>
-                    <button onClick={() => setKind("chilled")} className={`p-3 rounded-lg transition-all ${kind === "chilled" ? "bg-blue-500 text-white shadow-lg shadow-blue-500/50" : "bg-slate-700/50 hover:bg-slate-700"}`}>
-                      <Snowflake className="w-5 h-5 mx-auto mb-1" />
-                      <span className="text-xs block">チルド</span>
+                    <button onClick={() => setKind("chilled")} className={`flex-1 p-4 rounded-2xl active:scale-90 transition-all ${kind === "chilled" ? "bg-blue-500 text-white" : "bg-slate-800 text-slate-600"}`}>
+                      <Snowflake className="mx-auto" />
                     </button>
-                    <button onClick={() => setKind("heavy")} className={`p-3 rounded-lg transition-all ${kind === "heavy" ? "bg-amber-500 text-white shadow-lg shadow-amber-500/50" : "bg-slate-700/50 hover:bg-slate-700"}`}>
-                      <Weight className="w-5 h-5 mx-auto mb-1" />
-                      <span className="text-xs block">重量物</span>
+                    <button onClick={() => setKind("heavy")} className={`flex-1 p-4 rounded-2xl active:scale-90 transition-all ${kind === "heavy" ? "bg-amber-500 text-white" : "bg-slate-800 text-slate-600"}`}>
+                      <Weight className="mx-auto" />
                     </button>
                   </div>
                 </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2 text-slate-300">配送先</label>
-                  <select value={prefecture} onChange={(e) => setPrefecture(e.target.value as Prefecture)} className="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-cyan-500">
-                    {prefectures.map((p) => (
-                      <option key={p} value={p}>
-                        {p}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
                 {kind !== "heavy" && (
                   <div>
-                    <label className="block text-sm font-medium mb-2 text-slate-300">サイズ (cm)</label>
-                    <select value={size} onChange={(e) => setSize(Number(e.target.value))} className="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-cyan-500">
-                      {getSizeOptions().map((s) => (
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-3 ml-1">3. Size</label>
+                    <select value={size} onChange={(e) => setSize(Number(e.target.value))} className="w-full bg-slate-800 border-none rounded-2xl py-4 px-4 font-black text-lg appearance-none focus:ring-2 focus:ring-cyan-500">
+                      {/* ★ ここを修正：種別に応じたサイズリストを表示する */}
+                      {getPriceByGroup(selectedGroup)[kind].sizes.map((s: number) => (
                         <option key={s} value={s}>
-                          {s}
+                          {s}cm
                         </option>
                       ))}
                     </select>
                   </div>
                 )}
+              </section>
 
-                <div>
-                  <label className="block text-sm font-medium mb-2 text-slate-300">数量</label>
-                  <input type="number" min="1" value={quantity} onChange={(e) => setQuantity(Math.max(1, Number(e.target.value)))} className="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-cyan-500" />
+              {/* 3. 数量コントロール (復活!) */}
+              <section>
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-3 ml-1">4. Quantity</label>
+                <div className="flex items-center bg-slate-800 rounded-2xl p-2">
+                  <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-12 h-12 flex items-center justify-center bg-slate-700 rounded-xl active:scale-75 transition-all">
+                    <Minus size={20} />
+                  </button>
+                  <div className="flex-1 text-center font-black text-2xl">{quantity}</div>
+                  <button onClick={() => setQuantity(quantity + 1)} className="w-12 h-12 flex items-center justify-center bg-cyan-500 rounded-xl active:scale-75 transition-all">
+                    <Plus size={20} />
+                  </button>
                 </div>
-              </div>
+              </section>
 
-              <button onClick={addItem} className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-medium py-3 rounded-lg transition-all shadow-lg hover:shadow-cyan-500/50">
-                注文に追加
+              <button onClick={addItem} className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-black py-5 rounded-2xl active:scale-[0.97] transition-all shadow-xl shadow-cyan-500/20 text-lg flex items-center justify-center gap-2">
+                ADD TO LIST <ChevronRight size={20} />
               </button>
             </div>
 
-            {items.length > 0 && (
-              <div className="bg-slate-800/50 backdrop-blur rounded-2xl p-6 border border-slate-700/50 shadow-2xl">
-                <h2 className="text-xl font-bold mb-4 text-cyan-400">注文明細</h2>
-                <div className="space-y-3">
-                  {items.map((item, index) => {
-                    const fee = calculateItemFee(item, "v2025_01");
-                    return (
-                      <div key={index} className="bg-slate-700/30 rounded-lg p-4 flex items-center justify-between hover:bg-slate-700/50 transition-all">
-                        <div className="flex items-center gap-4 flex-1">
-                          <div className={`p-2 rounded-lg ${item.kind === "normal" ? "bg-cyan-500/20" : item.kind === "chilled" ? "bg-blue-500/20" : "bg-amber-500/20"}`}>
-                            {item.kind === "normal" && <Package className="w-5 h-5 text-cyan-400" />}
-                            {item.kind === "chilled" && <Snowflake className="w-5 h-5 text-blue-400" />}
-                            {item.kind === "heavy" && <Weight className="w-5 h-5 text-amber-400" />}
-                          </div>
-                          <div className="flex-1">
-                            <div className="font-medium">
-                              {item.to} / {item.kind === "normal" ? "普通" : item.kind === "chilled" ? "チルド" : "重量物"}
-                              {item.kind !== "heavy" && ` / ${item.size}cm`}
-                            </div>
-                            <div className="text-sm text-slate-400">
-                              ¥{fee.unitPrice.toLocaleString()} × {item.quantity}個
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <div className="text-xl font-bold text-cyan-400">¥{fee.subtotal.toLocaleString()}</div>
-                          </div>
+            {/* 右側：明細プレビュー */}
+            <div className="flex flex-col bg-black/20 rounded-[2rem] border border-white/5 p-6">
+              <h2 className="text-[10px] font-black text-slate-600 uppercase tracking-[0.3em] mb-6 text-center">Current Items</h2>
+
+              <div className="flex-1 overflow-y-auto space-y-3 min-h-[300px] pr-2 custom-scrollbar">
+                {items.length === 0 ? (
+                  <div className="h-full flex flex-col items-center justify-center text-slate-700 italic">
+                    <Package size={64} className="mb-4 opacity-10" />
+                    <p className="text-sm">リストは空です</p>
+                  </div>
+                ) : (
+                  items.map((item, i) => (
+                    <div key={i} className="bg-slate-800/50 p-4 rounded-2xl border border-white/5 flex justify-between items-center group animate-in slide-in-from-right-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-slate-700 rounded-xl flex items-center justify-center text-cyan-400">{item.kind === "normal" ? <Package size={18} /> : item.kind === "chilled" ? <Snowflake size={18} /> : <Weight size={18} />}</div>
+                        <div>
+                          <p className="text-xs font-black">
+                            {item.to} <span className="text-slate-500">/</span> {item.size ? `${item.size}cm` : "重量"}
+                          </p>
+                          <p className="text-[10px] text-slate-500 font-bold">数量: {item.quantity}</p>
                         </div>
-                        <button onClick={() => removeItem(index)} className="ml-4 text-red-400 hover:text-red-300 hover:bg-red-500/10 p-2 rounded-lg transition-all">
-                          ✕
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <span className="font-mono font-bold text-white text-sm">¥{calculateItemFee(item, "v2026_01").subtotal.toLocaleString()}</span>
+                        <button onClick={() => setItems(items.filter((_, idx) => idx !== i))} className="p-2 text-slate-600 hover:text-red-400 active:scale-50 transition-all">
+                          <X size={18} />
                         </button>
                       </div>
-                    );
-                  })}
-                </div>
-
-                <div className="mt-6 pt-6 border-t border-slate-700">
-                  <div className="flex items-center justify-between text-2xl font-bold mb-6">
-                    <span className="text-slate-300">合計金額</span>
-                    <span className="text-transparent bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text">¥{totalFee.toLocaleString()}</span>
-                  </div>
-
-                  <button onClick={handleComplete} disabled={loading || completed} className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 disabled:from-slate-600 disabled:to-slate-700 text-white font-bold py-4 rounded-lg transition-all shadow-lg hover:shadow-green-500/50 disabled:opacity-50 disabled:cursor-not-allowed text-lg">
-                    {loading ? "処理中..." : completed ? "集荷完了済み" : "集荷完了"}
-                  </button>
-                </div>
+                    </div>
+                  ))
+                )}
+                <div ref={itemsEndRef} />
               </div>
-            )}
 
-            {items.length === 0 && (
-              <div className="bg-slate-800/30 backdrop-blur rounded-2xl p-12 border border-slate-700/50 text-center">
-                <Package className="w-16 h-16 mx-auto mb-4 text-slate-600" />
-                <p className="text-slate-500">注文を追加してください</p>
+              <div className="mt-8 pt-6 border-t border-white/5">
+                <div className="flex justify-between items-end mb-6 px-2">
+                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Grand Total</span>
+                  <span className="text-4xl font-black font-mono text-cyan-400 tracking-tighter italic">¥{totalFee.toLocaleString()}</span>
+                </div>
+                <button onClick={handleComplete} disabled={items.length === 0 || loading} className="w-full bg-white text-slate-900 font-black py-5 rounded-3xl active:scale-95 transition-all text-xl shadow-2xl hover:bg-cyan-50 disabled:opacity-20 disabled:grayscale">
+                  {loading && <LoadingOverlay text="集荷完了を登録しています…" />}
+                </button>
               </div>
-            )}
+            </div>
           </div>
-          {loading && <LoadingOverlay text="集荷完了を登録しています…" />}
         </div>
       </div>
     </div>

@@ -7,16 +7,10 @@ export async function GET(req: Request) {
     const date = searchParams.get("date"); // YYYY-MM-DD
 
     if (!date) {
-      return NextResponse.json(
-        { success: false, error: "date is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ success: false, error: "date is required" }, { status: 400 });
     }
 
-    const ordersSnap = await adminDb
-      .collection("orders")
-      .where("reservationDate", "==", date)
-      .get();
+    const ordersSnap = await adminDb.collection("orders").where("reservationDate", "==", date).get();
 
     let totalAmount = 0;
     let unassigned = 0;
@@ -30,10 +24,7 @@ export async function GET(req: Request) {
       if (o.customerId) customerSet.add(o.customerId);
     });
 
-    const employeesSnap = await adminDb
-      .collection("employees")
-      .where("active", "==", true)
-      .get();
+    const employeesSnap = await adminDb.collection("employees").where("isActive", "==", true).get();
 
     return NextResponse.json({
       success: true,
@@ -48,9 +39,6 @@ export async function GET(req: Request) {
     });
   } catch (err) {
     console.error("KPI error:", err);
-    return NextResponse.json(
-      { success: false, error: String(err) },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: String(err) }, { status: 500 });
   }
 }

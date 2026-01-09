@@ -1,4 +1,4 @@
-import { PRICE_TABLES } from "./v2025_01";
+import { PRICE_TABLES } from "./v2026_01";
 
 export type PriceTableKey = keyof typeof PRICE_TABLES;
 

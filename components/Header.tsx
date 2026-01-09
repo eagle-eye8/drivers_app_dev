@@ -4,6 +4,7 @@ import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { usePathname } from "next/navigation";
 import { HomeIcon, ClipboardDocumentListIcon, UserIcon } from "@heroicons/react/24/outline";
+import { useAuth } from "@/app/providers/AuthProvider";
 
 // NavItem 型
 type NavItem = {
@@ -18,34 +19,15 @@ const navItems: NavItem[] = [
   { label: "集荷リスト", href: "/admin/orders", icon: ClipboardDocumentListIcon },
 ];
 
-type User = {
-  uid: string;
-  name: string;
-  admin: boolean;
-};
 export default function Header() {
-  const [user, setUser] = useState<User>();
+  const { user, loading } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
-
-  const [authState, setAuthState] = useState<"loading" | "authenticated" | "unauthenticated">("loading");
-
-  useEffect(() => {
-    fetch("/api/auth/check-admin", { credentials: "include" })
-      .then((res) => {
-        if (res.ok) {
-          setAuthState("authenticated");
-        } else {
-          setAuthState("unauthenticated");
-        }
-      })
-      .catch(() => setAuthState("unauthenticated"));
-  }, []);
+  if (!loading) return null;
   return (
     <header className="w-full flex items-center justify-between px-6 py-4 bg-white border-b border-gray-200">
       <div className="flex items-center gap-6">
         <div className="text-xl font-semibold text-gray-700">Spirit</div>
-        {/* Sign Out */}
       </div>
       <div className="flex items-center gap-4">
         {/* PCナビ */}
@@ -54,7 +36,6 @@ export default function Header() {
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = pathname.startsWith(item.href);
-
               return (
                 <a key={item.href} href={item.href} className={`flex items-center gap-2 pb-1 hover:text-gray-900 transition ${isActive ? "text-gray-900 font-semibold border-b-2 border-gray-900" : ""}`}>
                   <Icon className={`w-5 h-5 ${isActive ? "text-gray-900" : "text-gray-600"}`} />
@@ -65,7 +46,7 @@ export default function Header() {
           </nav>
         )}
         {/* ハンバーガー（スマホ） */}
-        {authState === "authenticated" && (
+        {user?.role === "admin" && (
           <button onClick={() => setMenuOpen(true)} className="md:hidden p-2 rounded hover:bg-gray-100">
             <div className="space-y-1">
               <span className="block w-6 h-0.5 bg-gray-600"></span>
@@ -77,7 +58,7 @@ export default function Header() {
       </div>
 
       {/* スライドメニュー（スマホ） */}
-      {menuOpen && authState === "authenticated" && (
+      {menuOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-40" onClick={() => setMenuOpen(false)}>
           <div className="absolute right-0 top-0 h-full w-64 bg-white p-6 shadow-lg" onClick={(e) => e.stopPropagation()}>
             <div className="text-lg font-semibold mb-6">Menu</div>
