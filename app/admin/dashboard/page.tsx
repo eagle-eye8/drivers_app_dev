@@ -1,34 +1,38 @@
 "use client";
 
-import useSWR from "swr";
+import useSWR, { mutate } from "swr";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ORDER_STATUS_META } from "@/lib/orderStatus";
 import { KANBAN_COLUMNS } from "@/lib/kanbanColumns";
 import { DashboardEmployee, OrderWithCustomer } from "@/types/orderWithCustomer";
 import { LoadingOverlay } from "@/components/ui/LoadingOverlay";
 import Button from "@/components/ui/button";
-import { PlusIcon, ArrowRight, ShieldCheck, UserIcon } from "lucide-react"; // アイコン追加
+import { PlusIcon, ArrowRight, UserIcon, ShieldCheck } from "lucide-react";
 import CreateOrderModal from "@/components/orders/CreateOrderModal";
 import { useAuth } from "@/app/providers/AuthProvider";
 import ProgressCircle from "@/components/ui/ProgressCircle";
 import { getJstDateString } from "@/lib/utils/date";
+import CreateCustomerModal from "@/components/customers/CreateCustomerModal";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
-export default function AdminDashboardPage() {
+export default function AdminDashboard() {
+  // ① Hooksは最初に全部書く
   const router = useRouter();
   const today = getJstDateString();
   const { user, loading: authLoading } = useAuth();
-  const [isOpen, setOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
+  const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
   const isAdmin = user?.role === "admin";
-  // APIフェッチ条件
+
   const shouldFetch = !authLoading && user?.role === "admin";
   const { data, error, isLoading } = useSWR(shouldFetch ? `/api/dashboard?date=${today}` : null, fetcher);
 
   if (authLoading) return <LoadingOverlay />;
-  if (!user || user.role !== "admin") {
+  if (!user || !isAdmin) {
     router.replace(user ? `/order/${user.uid}` : "/signin");
     return null;
   }
@@ -36,9 +40,8 @@ export default function AdminDashboardPage() {
   const { todayOrders = [], employees = [], kpi = { orderCount: 0, pendingCount: 0, totalAmount: 0 }, customers = [] } = data?.data || {};
 
   // 全体進捗の計算
-  const completedCount = todayOrders.filter((o: any) => o.status === "completed").length;
+  const completedCount = todayOrders.filter((o: OrderWithCustomer) => o.status === "completed").length;
   const totalCount = todayOrders.length;
-
   return (
     <div className="px-4 md:px-8 py-8 space-y-10 max-w-[1400px] mx-auto bg-gray-50/50 min-h-screen">
       {/* ================= HEADER & PROGRESS ================= */}
@@ -57,7 +60,7 @@ export default function AdminDashboardPage() {
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <Kpi title="本日の注文" value={kpi.orderCount} unit="件" />
-            <Kpi title="未対応" value={kpi.pendingCount} unit="件" danger={kpi.pendingCount > 0} />
+            {/* <Kpi title="未対応" value={kpi.pendingCount} unit="件" danger={kpi.pendingCount > 0} /> */}
             <Kpi title="完了済み" value={completedCount} unit="件" success />
             <Kpi title="売上" value={kpi.totalAmount.toLocaleString()} unit="円" />
             {/* スタッフ数の代わりに完了数を配置 */}
@@ -86,10 +89,9 @@ export default function AdminDashboardPage() {
             <Link key={emp.id} href={`/orders/${emp.id}?date=${today}`} className="group bg-white rounded-2xl p-4 border border-gray-100 shadow-sm hover:shadow-md transition-all flex justify-between items-center">
               <div className="space-y-1">
                 <div className="font-bold text-gray-800 group-hover:text-blue-600 transition-colors">{emp.name}</div>
-                <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Efficiency</div>
               </div>
               {/* 従業員別ミニリング（APIに完了数があれば適用） */}
-              <ProgressCircle current={emp.assignedOrderCount ? Math.floor(emp.assignedOrderCount * 0.7) : 0} total={emp.assignedOrderCount || 0} size={50} strokeWidth={6} />
+              <ProgressCircle current={emp.completedOrderCount} total={emp.assignedOrderCount || 0} size={50} strokeWidth={6} />
             </Link>
           ))}
         </div>
@@ -100,40 +102,55 @@ export default function AdminDashboardPage() {
         <div className="flex justify-between items-center">
           <h2 className="text-xl font-bold">アサインボード</h2>
           <div className="flex gap-3">
-            <Button onClick={() => setOpen(true)} className="rounded-full px-6 bg-blue-600 hover:bg-blue-700">
-              <PlusIcon className="w-4 h-4 mr-2" />
-              新規注文
-            </Button>
             <Link href="/admin/orders" className="p-2 bg-white border rounded-full hover:bg-gray-50 transition shadow-sm">
               <ArrowRight className="w-5 h-5 text-gray-600" />
             </Link>
           </div>
         </div>
-
-        <div className="flex gap-4 overflow-x-auto pb-6 scrollbar-hide focus:cursor-grabbing">
-          {KANBAN_COLUMNS.filter((col) => col.id !== "completed").map((col) => {
-            const orders = todayOrders?.filter((o: OrderWithCustomer) => o.status === col.id) || [];
-            return (
-              <div key={col.id} className="min-w-[300px] flex flex-col space-y-3">
-                <div className="flex items-center justify-between px-2">
-                  <span className="text-sm font-bold text-gray-500 uppercase tracking-widest">{col.title}</span>
-                  <span className="bg-gray-200 text-gray-600 text-[10px] px-2 py-0.5 rounded-full font-bold">{orders.length}</span>
-                </div>
-                <div className={`flex-1 rounded-2xl p-2 min-h-[300px] bg-gray-100/50 border-2 border-dashed border-gray-200`}>
-                  {orders.map((order: OrderWithCustomer) => (
-                    <div key={order.id} className="bg-white rounded-xl p-4 shadow-sm mb-3 border border-gray-100 hover:border-blue-300 transition-colors">
-                      <div className="text-sm font-bold text-gray-800">{order.customer?.name}</div>
-                      <div className="text-[10px] text-gray-400 mt-1 font-mono">#{order.id.slice(-4)}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-        </div>
       </section>
 
-      {isOpen && <CreateOrderModal isOpen={isOpen} onClose={() => setOpen(false)} customers={customers} employees={employees} />}
+      {/* ================= FLOATING ACTION BUTTON (FAB) ================= */}
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
+        {/* メニュー展開時のバックドロップ（メニューが開いている時だけ表示） */}
+        {isMenuOpen && <div className="fixed inset-0 bg-slate-900/20 backdrop-blur-[2px] z-[-1]" onClick={() => setIsMenuOpen(false)} />}
+
+        {/* 展開されるメニュー項目 */}
+        <div className={`flex flex-col items-end gap-3 transition-all duration-300 ${isMenuOpen ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"}`}>
+          <button
+            onClick={() => {
+              setIsCustomerModalOpen(true);
+              setIsMenuOpen(false);
+            }}
+            className="flex items-center gap-3 bg-white px-4 py-2.5 rounded-2xl shadow-lg border border-slate-100 hover:bg-emerald-50 text-emerald-700 transition-all active:scale-95"
+          >
+            <span className="text-sm font-bold">新規顧客登録</span>
+            <div className="p-2 bg-emerald-100 rounded-xl">
+              <UserIcon className="w-5 h-5" />
+            </div>
+          </button>
+
+          <button
+            onClick={() => {
+              setIsOrderModalOpen(true);
+              setIsMenuOpen(false);
+            }}
+            className="flex items-center gap-3 bg-white px-4 py-2.5 rounded-2xl shadow-lg border border-slate-100 hover:bg-blue-50 text-blue-700 transition-all active:scale-95"
+          >
+            <span className="text-sm font-bold">新規注文作成</span>
+            <div className="p-2 bg-blue-100 rounded-xl">
+              <PlusIcon className="w-5 h-5" />
+            </div>
+          </button>
+        </div>
+
+        {/* メインの起動ボタン */}
+        <button onClick={() => setIsMenuOpen(!isMenuOpen)} className={`w-14 h-14 rounded-2xl shadow-2xl flex items-center justify-center transition-all duration-300 active:scale-90 ${isMenuOpen ? "bg-slate-800 rotate-45 text-white" : "bg-blue-600 text-white hover:bg-blue-700"}`}>
+          <PlusIcon className="w-8 h-8" />
+        </button>
+      </div>
+
+      {isOrderModalOpen && <CreateOrderModal isOpen={isOrderModalOpen} onClose={() => setIsOrderModalOpen(false)} customers={customers} employees={employees} />}
+      {isCustomerModalOpen && <CreateCustomerModal isOpen={isCustomerModalOpen} onClose={() => setIsCustomerModalOpen(false)} />}
     </div>
   );
 }

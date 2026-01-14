@@ -1,3 +1,6 @@
+import { Timestamp } from "firebase/firestore";
+import { FirestoreTimestamp } from "./pickup";
+
 export type Customer = {
   id: string;
   name: string;
@@ -8,6 +11,6 @@ export type Customer = {
     lat: number;
     lng: number;
   } | null;
-  createdAt: number;
-  updatedAt: number;
+  createdAt: FirestoreTimestamp;
+  updatedAt: FirestoreTimestamp;
 };

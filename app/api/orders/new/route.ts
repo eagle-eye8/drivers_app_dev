@@ -1,7 +1,7 @@
 // app/api/orders/new/route.ts
 import { NextResponse } from "next/server";
-import { db } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 export async function POST(request: Request) {
   try {

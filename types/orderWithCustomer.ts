@@ -11,6 +11,7 @@ export type DashboardEmployee = {
   id: string;
   name: string;
   assignedOrderCount: number;
+  completedOrderCount: number;
 };
 
 export type OrderWithCustomer = Order & {

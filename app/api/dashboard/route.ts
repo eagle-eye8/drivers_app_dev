@@ -148,19 +148,39 @@ export async function GET() {
       ...(d.data() as any),
     }));
 
-    const orderCountByEmployee = new Map<string, number>();
+const orderStatsByEmployee = new Map<
+  string,
+  { assigned: number; completed: number }
+>();
 
-    todayOrders.forEach((order) => {
-      const emp = order.assignedUid;
-      if (!emp) return;
-      orderCountByEmployee.set(emp, (orderCountByEmployee.get(emp) ?? 0) + 1);
-    });
+todayOrders.forEach((order) => {
+  const uid = order.assignedUid;
+  if (!uid) return;
 
-    const dashboardEmployees: DashboardEmployee[] = employees.map((emp) => ({
-      id: emp.id,
-      name: emp.name,
-      assignedOrderCount: orderCountByEmployee.get(emp.id) ?? 0,
-    }));
+  if (!orderStatsByEmployee.has(uid)) {
+    orderStatsByEmployee.set(uid, { assigned: 0, completed: 0 });
+  }
+
+  const stats = orderStatsByEmployee.get(uid)!;
+  stats.assigned += 1;
+
+  if (order.status === "completed") {
+    stats.completed += 1;
+  }
+});
+const dashboardEmployees: DashboardEmployee[] = employees.map((emp) => {
+  const stats = orderStatsByEmployee.get(emp.id) ?? {
+    assigned: 0,
+    completed: 0,
+  };
+
+  return {
+    id: emp.id,
+    name: emp.name,
+    assignedOrderCount: stats.assigned,
+    completedOrderCount: stats.completed,
+  };
+});
 
     return NextResponse.json({
       success: true,
