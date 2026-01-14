@@ -1,10 +1,11 @@
 import { OrderStatus } from "@/lib/orderStatus";
+import { FirestoreTimestamp } from "./pickup";
 
 export type Order = {
   id: string;
   customerId: string;
   assignedUid?: string | null;
-  reservationDate: string; // YYYY-MM-DD
+  reservationDate: FirestoreTimestamp; // YYYY-MM-DD
   routeGroupId: string; // customerId-YYYY-MM-DD
   status: OrderStatus;
   amount: number;
@@ -14,7 +15,7 @@ export type Order = {
   items: OrderItem[];
   isMerged: boolean;
   deliveryOrder: number;
-  createdAt: number;
-  updatedAt: number;
+  createdAt: FirestoreTimestamp;
+  updatedAt: FirestoreTimestamp;
   // priceVersion: PriceTableVersion;
 };

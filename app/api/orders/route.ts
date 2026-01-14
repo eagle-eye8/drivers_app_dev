@@ -19,8 +19,7 @@ export async function GET(req: Request) {
       const from = new Date(`${date}T00:00:00+09:00`);
       const to = new Date(from);
       to.setDate(from.getDate() + 1);
-      query = query.where("reservationDate", ">=", Timestamp.fromDate(from))
-                   .where("reservationDate", "<", Timestamp.fromDate(to));
+      query = query.where("reservationDate", ">=", Timestamp.fromDate(from)).where("reservationDate", "<", Timestamp.fromDate(to));
     }
 
     // ステータスでの絞り込み
@@ -126,7 +125,6 @@ export async function POST(req: Request) {
       status: assignedUid ? "assigned" : "pending",
       amount: 0,
       paymentStatus: "unpaid",
-      items: [kind === "heavy" ? { kind, to: "tokyo", quantity } : { kind, to: "tokyo", size: 60, quantity }],
       isMerged: false,
       deliveryOrder: 0,
       createdAt: FieldValue.serverTimestamp(),
