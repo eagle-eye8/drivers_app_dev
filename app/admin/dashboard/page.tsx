@@ -98,7 +98,7 @@ export default function AdminDashboard() {
       </section>
 
       {/* ================= 注文状況（カンバン） ================= */}
-      <section className="space-y-4">
+      {/* <section className="space-y-4">
         <div className="flex justify-between items-center">
           <h2 className="text-xl font-bold">アサインボード</h2>
           <div className="flex gap-3">
@@ -107,7 +107,7 @@ export default function AdminDashboard() {
             </Link>
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* ================= FLOATING ACTION BUTTON (FAB) ================= */}
       <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
