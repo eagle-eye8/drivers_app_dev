@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { usePathname } from "next/navigation";
-import { HomeIcon, ClipboardDocumentListIcon, UserIcon } from "@heroicons/react/24/outline";
+import { HomeIcon, ClipboardDocumentListIcon, UsersIcon } from "@heroicons/react/24/outline";
 import { useAuth } from "@/app/providers/AuthProvider";
 
 // NavItem 型
@@ -16,7 +16,8 @@ type NavItem = {
 // NavItems
 const navItems: NavItem[] = [
   { label: "Dashboard", href: "/admin/dashboard", icon: HomeIcon },
-  { label: "集荷リスト", href: "/admin/orders", icon: ClipboardDocumentListIcon },
+  { label: "集荷一覧", href: "/admin/orders", icon: ClipboardDocumentListIcon },
+  { label: "顧客一覧", href: "/customers", icon: UsersIcon },
 ];
 
 export default function Header() {

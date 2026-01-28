@@ -1,9 +1,9 @@
-import { Timestamp } from "firebase/firestore";
 import { FirestoreTimestamp } from "./pickup";
 
 export type Customer = {
   id: string;
   name: string;
+  kana: string;
   email?: string;
   phone?: string;
   address: string;

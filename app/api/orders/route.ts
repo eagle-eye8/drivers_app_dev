@@ -5,6 +5,55 @@ import { OrderWithCustomer } from "@/types/orderWithCustomer";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { jstMidnightFromDateString } from "@/lib/date";
 
+// Google Routes APIを呼び出す補助関数
+async function getOptimizedOrder(orders: OrderWithCustomer[]) {
+  const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+  if (!apiKey || orders.length <= 1) return orders;
+
+  // 未完了の注文のみを最適化対象にする
+  const incompleteOrders = orders.filter((o) => o.status !== "completed");
+  const completedOrders = orders.filter((o) => o.status === "completed");
+
+  if (incompleteOrders.length <= 1) return orders;
+
+  try {
+    const response = await fetch("https://routes.googleapis.com/directions/v2:computeRoutes", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": apiKey,
+        "X-Goog-FieldMask": "routes.optimizedWaypointOrder", // 並び替え順序だけ取得
+      },
+      body: JSON.stringify({
+        // 出発地（配送拠点の住所、または最初の注文の場所など。空欄なら現在地ベースの最適化は困難なため、拠点を推奨）
+        origin: { address: "東京都文京区..." },
+        // 目的地（最後の配送先）
+        destination: { address: incompleteOrders[incompleteOrders.length - 1].customer?.address },
+        // 経由地
+        intermediates: incompleteOrders.slice(0, -1).map((o) => ({
+          address: o.customer?.address,
+        })),
+        travelMode: "DRIVE",
+        optimizeWaypointOrder: true,
+      }),
+    });
+
+    const result = await response.json();
+    const waypointOrder = result.routes?.[0]?.optimizedWaypointOrder;
+
+    if (waypointOrder) {
+      // APIが返した順序 [2, 0, 1] のようなインデックスに基づいて並び替え
+      const intermediates = incompleteOrders.slice(0, -1);
+      const sortedIntermediates = waypointOrder.map((idx: number) => intermediates[idx]);
+      // 最適化済み未完了リスト + 最後に設定した目的地 + すでに終わった注文
+      return [...sortedIntermediates, incompleteOrders[incompleteOrders.length - 1], ...completedOrders];
+    }
+  } catch (error) {
+    console.error("Route Optimization Error:", error);
+  }
+  return orders; // 失敗時は元の順序を返す
+}
+
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
@@ -88,6 +137,7 @@ export async function GET(req: Request) {
           ? {
               id: data.customerId,
               name: customer.name,
+              kana: customer.kana,
               address: customer.address,
               location: customer.location ?? null,
               createdAt: customer.createdAt?.toMillis?.() ?? 0,
@@ -100,6 +150,13 @@ export async function GET(req: Request) {
         },
       };
     });
+
+    // ★ ここでルート最適化を実行！
+    // 従業員ID(uid)が指定されている（＝特定の人のルートを表示している）時だけ最適化する
+    let finalData = orders;
+    if (uid && orders.length > 0) {
+      finalData = await getOptimizedOrder(orders);
+    }
 
     return NextResponse.json({ success: true, data: orders });
   } catch (e) {
