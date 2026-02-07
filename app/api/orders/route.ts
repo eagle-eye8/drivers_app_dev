@@ -125,6 +125,7 @@ export async function GET(req: Request) {
         routeGroupId: data.routeGroupId,
         status: data.status,
         amount: data.amount ?? 0,
+        postOfficeFee: data.postOfficeFee,
         paymentStatus: data.paymentStatus,
         notes: data.notes,
         pickupWindow: data.pickupWindow,

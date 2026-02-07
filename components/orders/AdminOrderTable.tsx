@@ -8,7 +8,7 @@ import { PickupModal } from "../pickups/PickupModal";
 
 type Props = {
   orders: OrderWithCustomer[];
-  onAssigned?: () => void;  // SWR mutate 用
+  onAssigned?: () => void; // SWR mutate 用
   onPickupCompleted?: () => void; // SWR mutate 用
 };
 
@@ -20,7 +20,7 @@ export function AdminOrderTable({ orders, onAssigned, onPickupCompleted }: Props
     <>
       <table className="w-full text-sm border rounded-lg overflow-hidden">
         <thead className="bg-gray-50">
-          <tr>
+          <tr key="admin">
             <th className="px-3 py-2 text-left">注文者</th>
             <th className="px-3 py-2 text-left">住所</th>
             <th className="px-3 py-2 text-right">数量</th>
@@ -43,9 +43,7 @@ export function AdminOrderTable({ orders, onAssigned, onPickupCompleted }: Props
 
               {/* 状態 */}
               <td className="px-3 py-3 text-center">
-                <span className={`inline-block text-xs px-2 py-1 rounded ${ORDER_STATUS_META[o.status]?.badgeClass}`}>
-                  {ORDER_STATUS_META[o.status]?.label}
-                </span>
+                <span className={`inline-block text-xs px-2 py-1 rounded ${ORDER_STATUS_META[o.status]?.badgeClass}`}>{ORDER_STATUS_META[o.status]?.label}</span>
               </td>
 
               {/* 担当者 */}
@@ -109,7 +107,7 @@ export function AdminOrderTable({ orders, onAssigned, onPickupCompleted }: Props
         <PickupModal
           order={targetPickupOrder}
           onClose={() => setTargetPickupOrder(null)}
-          onCompleted={() => {
+          onSuccess={() => {
             setTargetPickupOrder(null);
             onPickupCompleted?.(); // SWR mutate
           }}

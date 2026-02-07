@@ -1,21 +1,21 @@
 "use client";
 import { useEffect, useState } from "react";
+import Image from "next/image"; // Imageコンポーネントを追加
 import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation"; // useRouterを追加
 import { HomeIcon, ClipboardDocumentListIcon, UsersIcon } from "@heroicons/react/24/outline";
 import { useAuth } from "@/app/providers/AuthProvider";
 
-// NavItem 型
+// NavItem 型の定義を修正（ComponentTypeを使用）
 type NavItem = {
   label: string;
   href: string;
-  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+  icon: React.ForwardRefExoticComponent<React.PropsWithoutRef<React.SVGProps<SVGSVGElement>> & { title?: string; titleId?: string }>;
 };
 
-// NavItems
 const navItems: NavItem[] = [
-  { label: "Dashboard", href: "/admin/dashboard", icon: HomeIcon },
+  { label: "ダッシュボード", href: "/admin/dashboard", icon: HomeIcon },
   { label: "集荷一覧", href: "/admin/orders", icon: ClipboardDocumentListIcon },
   { label: "顧客一覧", href: "/customers", icon: UsersIcon },
 ];
@@ -24,70 +24,85 @@ export default function Header() {
   const { user, loading } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
+  const router = useRouter(); // 遷移用
+
   if (loading) return null;
+
   return (
-    <header className="w-full flex items-center justify-between px-6 py-4 bg-white border-b border-gray-200">
+    <header className="w-full flex items-center justify-between px-6 py-4 bg-white border-b border-gray-100 sticky top-0 z-50">
       <div className="flex items-center gap-6">
-        <div className="text-xl font-semibold text-gray-700">Spirit</div>
+        <div className="flex items-center gap-2.5 group cursor-pointer" onClick={() => router.push("/admin/dashboard")}>
+          <div className="flex items-center gap-2 group cursor-pointer">
+            {/* アイコン部分：少し角を丸くして柔らかさを */}
+          <div className="relative w-9 h-9 overflow-hidden rounded-xl shadow-inner border border-slate-100 transition-all group-hover:shadow-md group-hover:scale-105">
+            <Image src="/logo-header.webp" alt="Spirit Logo" fill className="object-cover p-0.5" />
+          </div>
+
+            {/* テキスト部分：Gemini風スタイリング */}
+            <div className="font-outfit text-2xl font-semibold tracking-[-0.02em] flex items-baseline">
+              <span className="text-slate-800">Spi</span>
+              <span className="text-slate-800">rit</span>
+              {/* 最後にGemini風のキラキラ（ドット）を添えるとさらにおしゃれ */}
+              <span className="ml-0.5 w-1.5 h-1.5 rounded-full bg-gradient-to-tr from-cyan-400 to-blue-500"></span>
+            </div>
+          </div>{" "}
+        </div>
       </div>
+
       <div className="flex items-center gap-4">
         {/* PCナビ */}
         {user && (
-          <nav className="hidden md:flex gap-6 text-gray-700 font-medium">
+          <nav className="hidden md:flex items-center gap-8 text-slate-600 font-bold">
             {navItems.map((item) => {
-              const Icon = item.icon;
+              const Icon = item.icon; // 変数に代入
               const isActive = pathname.startsWith(item.href);
               return (
-                <a key={item.href} href={item.href} className={`flex items-center gap-2 pb-1 hover:text-gray-900 transition ${isActive ? "text-gray-900 font-semibold border-b-2 border-gray-900" : ""}`}>
-                  <Icon className={`w-5 h-5 ${isActive ? "text-gray-900" : "text-gray-600"}`} />
-                  {item.label}
+                <a key={item.href} href={item.href} className={`flex items-center gap-2 py-1 transition-all hover:text-indigo-600 border-b-2 ${isActive ? "text-indigo-600 border-indigo-600" : "border-transparent"}`}>
+                  <Icon className="w-5 h-5" />
+                  <span className="text-sm tracking-tight">{item.label}</span>
                 </a>
               );
             })}
-            <button className="mt-6 px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-700" onClick={() => signOut(auth)}>
-              Sign Out
+            <button className="ml-4 px-5 py-2 bg-slate-800 text-white text-xs font-black rounded-full hover:bg-slate-700 transition shadow-lg shadow-slate-200 active:scale-95" onClick={() => signOut(auth)}>
+              SIGN OUT
             </button>
           </nav>
         )}
+
         {/* ハンバーガー（スマホ） */}
         {user?.role === "admin" && (
-          <button onClick={() => setMenuOpen(true)} className="md:hidden p-2 rounded hover:bg-gray-100">
-            <div className="space-y-1">
-              <span className="block w-6 h-0.5 bg-gray-600"></span>
-              <span className="block w-6 h-0.5 bg-gray-600"></span>
-              <span className="block w-6 h-0.5 bg-gray-600"></span>
+          <button onClick={() => setMenuOpen(true)} className="md:hidden p-2 rounded-xl bg-slate-50 hover:bg-slate-100 transition">
+            <div className="space-y-1.5">
+              <span className="block w-6 h-0.5 bg-slate-800 rounded-full"></span>
+              <span className="block w-4 h-0.5 bg-slate-800 rounded-full"></span>
+              <span className="block w-6 h-0.5 bg-slate-800 rounded-full"></span>
             </div>
           </button>
         )}
       </div>
 
-      {/* スライドメニュー（スマホ） */}
+      {/* スライドメニュー（スマホ）省略せず実装 */}
       {menuOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-40" onClick={() => setMenuOpen(false)}>
-          <div className="absolute right-0 top-0 h-full w-64 bg-white p-6 shadow-lg" onClick={(e) => e.stopPropagation()}>
-            <div className="text-lg font-semibold mb-6">Menu</div>
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100]" onClick={() => setMenuOpen(false)}>
+          <div className="absolute right-0 top-0 h-full w-72 bg-white p-8 shadow-2xl transition-transform" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-3 mb-10 pb-4 border-b border-slate-100">
+              <Image src="/apple-touch-icon.png" alt="Logo" width={32} height={32} className="rounded-lg shadow" />
+              <span className="text-xl font-black italic tracking-tighter text-slate-800 uppercase">Spirit</span>
+            </div>
 
-            <nav className="flex flex-col gap-4 text-gray-700">
+            <nav className="flex flex-col gap-6">
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = pathname.startsWith(item.href);
-
                 return (
-                  <a
-                    key={item.href}
-                    href={item.href}
-                    className={`flex items-center gap-3 hover:text-gray-900
-                      ${isActive ? "text-gray-900 font-semibold" : ""}
-                    `}
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    <Icon className={`w-6 h-6 ${isActive ? "text-gray-900" : "text-gray-600"}`} />
-                    {item.label}
+                  <a key={item.href} href={item.href} className={`flex items-center gap-4 p-3 rounded-2xl transition-all ${isActive ? "bg-indigo-50 text-indigo-600" : "text-slate-500 hover:bg-slate-50"}`} onClick={() => setMenuOpen(false)}>
+                    <Icon className="w-6 h-6" />
+                    <span className="font-bold">{item.label}</span>
                   </a>
                 );
               })}
             </nav>
-            <button className="mt-6 px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-700" onClick={() => signOut(auth)}>
+            <button className="w-full mt-12 py-4 bg-slate-100 text-slate-500 font-bold rounded-2xl hover:bg-red-50 hover:text-red-500 transition-colors" onClick={() => signOut(auth)}>
               Sign Out
             </button>
           </div>

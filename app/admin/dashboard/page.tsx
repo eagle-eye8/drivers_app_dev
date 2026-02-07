@@ -9,23 +9,24 @@ import { KANBAN_COLUMNS } from "@/lib/kanbanColumns";
 import { DashboardEmployee, OrderWithCustomer } from "@/types/orderWithCustomer";
 import { LoadingOverlay } from "@/components/ui/LoadingOverlay";
 import Button from "@/components/ui/button";
-import { PlusIcon, ArrowRight, UserIcon, ShieldCheck } from "lucide-react";
+import { PlusIcon, ArrowRight, UserIcon, ShieldCheck, FileUser, ListPlus } from "lucide-react";
 import CreateOrderModal from "@/components/orders/CreateOrderModal";
 import { useAuth } from "@/app/providers/AuthProvider";
 import ProgressCircle from "@/components/ui/ProgressCircle";
 import { getJstDateString } from "@/lib/utils/date";
 import CreateCustomerModal from "@/components/customers/CreateCustomerModal";
+import DailySummaryModal from "@/components/ui/DailySummaryModal";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 export default function AdminDashboard() {
-  // ① Hooksは最初に全部書く
   const router = useRouter();
   const today = getJstDateString();
   const { user, loading: authLoading } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
   const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
+  const [isSummaryOpen, setIsSummaryOpen] = useState(false);
   const isAdmin = user?.role === "admin";
 
   const shouldFetch = !authLoading && user?.role === "admin";
@@ -33,7 +34,7 @@ export default function AdminDashboard() {
 
   if (authLoading) return <LoadingOverlay />;
   if (!user || !isAdmin) {
-    router.replace(user ? `/order/${user.uid}` : "/signin");
+    router?.replace(user ? `/order/${user.uid}` : "/signin");
     return null;
   }
 
@@ -72,10 +73,10 @@ export default function AdminDashboard() {
             <PlusIcon size={100} />
           </div>
           <div className="z-10">
-            <h3 className="text-sm font-black text-blue-500 uppercase tracking-widest mb-1">Total Progress</h3>
-            <p className="text-xs text-gray-400 font-medium">{completedCount === totalCount && totalCount > 0 ? "All tasks cleared! ✨" : "Keep it up!"}</p>
+            <h3 className="text-sm font-black text-blue-500 uppercase tracking-widest mb-1">進捗状況</h3>
+            <p className="text-xs text-gray-400 font-medium">{completedCount === totalCount && totalCount > 0 ? "集荷完了! ✨" : "集荷実施中!"}</p>
           </div>
-          <ProgressCircle current={completedCount} total={totalCount} size={110} strokeWidth={12} label="Daily" />
+          <ProgressCircle current={completedCount} total={totalCount} size={110} strokeWidth={12} />
         </div>
       </header>
 
@@ -138,19 +139,32 @@ export default function AdminDashboard() {
           >
             <span className="text-sm font-bold">新規注文作成</span>
             <div className="p-2 bg-blue-100 rounded-xl">
-              <PlusIcon className="w-5 h-5" />
+              <ListPlus className="w-5 h-5" />
+            </div>
+          </button>
+          <button
+            onClick={() => {
+              setIsSummaryOpen(true);
+              setIsMenuOpen(false);
+            }}
+            className="flex items-center gap-3 bg-white px-4 py-2.5 rounded-2xl shadow-lg border border-slate-100 hover:bg-blue-50 text-blue-700 transition-all active:scale-95"
+          >
+            <span className="text-sm font-bold">集計サマリー</span>
+            <div className="p-2 bg-blue-100 rounded-xl">
+              <FileUser className="w-5 h-5" />
             </div>
           </button>
         </div>
 
         {/* メインの起動ボタン */}
-        <button onClick={() => setIsMenuOpen(!isMenuOpen)} className={`w-14 h-14 rounded-2xl shadow-2xl flex items-center justify-center transition-all duration-300 active:scale-90 ${isMenuOpen ? "bg-slate-800 rotate-45 text-white" : "bg-blue-600 text-white hover:bg-blue-700"}`}>
-          <PlusIcon className="w-8 h-8" />
+        <button onClick={() => setIsMenuOpen(!isMenuOpen)} className={`w-12 h-12 rounded-2xl shadow-2xl flex items-center justify-center transition-all duration-300 active:scale-90 ${isMenuOpen ? "bg-slate-800 rotate-45 text-white" : "bg-blue-600 text-white hover:bg-blue-700"}`}>
+          <PlusIcon className="w-7 h-7" />
         </button>
       </div>
 
       {isOrderModalOpen && <CreateOrderModal isOpen={isOrderModalOpen} onClose={() => setIsOrderModalOpen(false)} customers={customers} employees={employees} />}
       {isCustomerModalOpen && <CreateCustomerModal isOpen={isCustomerModalOpen} onClose={() => setIsCustomerModalOpen(false)} />}
+      {isSummaryOpen && <DailySummaryModal onClose={() => setIsSummaryOpen(false)} isAdmin={false} uid={user.uid} orders={todayOrders} />}
     </div>
   );
 }

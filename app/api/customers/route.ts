@@ -11,7 +11,6 @@ export async function GET() {
       id: doc.id,
       ...(doc.data() as any),
     }))
-    console.log("customers", customers);
     return NextResponse.json(customers);
   } catch (error) {
     console.error(error);

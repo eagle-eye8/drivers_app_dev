@@ -9,6 +9,7 @@ export type Order = {
   routeGroupId: string; // customerId-YYYY-MM-DD
   status: OrderStatus;
   amount: number;
+  postOfficeFee: number;
   paymentStatus: "unpaid" | "paid" | "pending";
   notes?: string;
   pickupWindow?: number; // 1,2,3

@@ -106,11 +106,13 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       const itemPricings = items.map((item) => calculateItemFee(item, priceVersion));
 
       const totalAmount = itemPricings.reduce((sum, p) => sum + p.subtotal, 0);
+      const totalPostOfficeFee = itemPricings.reduce((sum, p) => sum + p.postOfficeSubtotal, 0);
 
       await adminDb.collection("orders").doc(id).update({
         items,
         priceVersion,
         amount: totalAmount,
+        postOfficeFee: totalPostOfficeFee,
         status: "completed",
         updatedAt: FieldValue.serverTimestamp(),
       });

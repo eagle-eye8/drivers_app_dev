@@ -40,7 +40,6 @@ export async function PATCH(req: Request, { params }: RouteContext) {
 export async function DELETE(req: Request, { params }: RouteContext) {
   try {
     const { id } = await params;
-    console.log("id", id);
     if (!id) {
       return NextResponse.json({ error: "IDが指定されていません" }, { status: 400 });
     }
