@@ -1,0 +1,508 @@
+{
+  "v2026_01": {
+    "hokkaido": {
+      "label": "北海道",
+      "normal": {
+        "60": {
+          "postOfficeFee": 537,
+          "customerPrice": 1050
+        },
+        "80": {
+          "postOfficeFee": 658,
+          "customerPrice": 1250
+        },
+        "100": {
+          "postOfficeFee": 784,
+          "customerPrice": 1350
+        },
+        "120": {
+          "postOfficeFee": 960,
+          "customerPrice": 1550
+        },
+        "140": {
+          "postOfficeFee": 1247,
+          "customerPrice": 2100
+        },
+        "160": {
+          "postOfficeFee": 1577,
+          "customerPrice": 2600
+        },
+        "170": {
+          "postOfficeFee": 1773,
+          "customerPrice": 2800
+        }
+      },
+      "chilled": {
+        "60": {
+          "postOfficeFee": 762,
+          "customerPrice": 1450
+        },
+        "80": {
+          "postOfficeFee": 1019,
+          "customerPrice": 1600
+        },
+        "100": {
+          "postOfficeFee": 1636,
+          "customerPrice": 2100
+        },
+        "120": {
+          "postOfficeFee": 1636,
+          "customerPrice": 2100
+        },
+        "140": {
+          "postOfficeFee": 2577,
+          "customerPrice": 3300
+        },
+        "160": {
+          "postOfficeFee": 3677,
+          "customerPrice": 4350
+        }
+      },
+      "heavyFee": {
+        "postOfficeFee": 2200,
+        "customerPrice": 3000
+      }
+    },
+    "aomori": {
+      "label": "青森",
+      "normal": {
+        "60": {
+          "postOfficeFee": 493,
+          "customerPrice": 850
+        },
+        "80": {
+          "postOfficeFee": 592,
+          "customerPrice": 950
+        },
+        "100": {
+          "postOfficeFee": 674,
+          "customerPrice": 1000
+        },
+        "120": {
+          "postOfficeFee": 773,
+          "customerPrice": 1150
+        },
+        "140": {
+          "postOfficeFee": 944,
+          "customerPrice": 1700
+        },
+        "160": {
+          "postOfficeFee": 1131,
+          "customerPrice": 2200
+        },
+        "170": {
+          "postOfficeFee": 1235,
+          "customerPrice": 2400
+        }
+      },
+      "chilled": {
+        "60": {
+          "postOfficeFee": 718,
+          "customerPrice": 1330
+        },
+        "80": {
+          "postOfficeFee": 953,
+          "customerPrice": 1450
+        },
+        "100": {
+          "postOfficeFee": 1149,
+          "customerPrice": 1900
+        },
+        "120": {
+          "postOfficeFee": 1149,
+          "customerPrice": 1900
+        },
+        "140": {
+          "postOfficeFee": 2274,
+          "customerPrice": 3000
+        },
+        "160": {
+          "postOfficeFee": 3231,
+          "customerPrice": 4000
+        }
+      },
+      "heavyFee": {
+        "postOfficeFee": 1980,
+        "customerPrice": 2700
+      }
+    },
+    "tohoku_kanto": {
+      "label": "東北・関東・信越",
+      "normal": {
+        "60": {
+          "postOfficeFee": 504,
+          "customerPrice": 950
+        },
+        "80": {
+          "postOfficeFee": 603,
+          "customerPrice": 1050
+        },
+        "100": {
+          "postOfficeFee": 685,
+          "customerPrice": 1100
+        },
+        "120": {
+          "postOfficeFee": 806,
+          "customerPrice": 1200
+        },
+        "140": {
+          "postOfficeFee": 999,
+          "customerPrice": 1800
+        },
+        "160": {
+          "postOfficeFee": 1211,
+          "customerPrice": 2300
+        },
+        "170": {
+          "postOfficeFee": 1345,
+          "customerPrice": 2500
+        }
+      },
+      "chilled": {
+        "60": {
+          "postOfficeFee": 729,
+          "customerPrice": 1350
+        },
+        "80": {
+          "postOfficeFee": 964,
+          "customerPrice": 1500
+        },
+        "100": {
+          "postOfficeFee": 1482,
+          "customerPrice": 1950
+        },
+        "120": {
+          "postOfficeFee": 1482,
+          "customerPrice": 1950
+        },
+        "140": {
+          "postOfficeFee": 2329,
+          "customerPrice": 3300
+        },
+        "160": {
+          "postOfficeFee": 3311,
+          "customerPrice": 4100
+        }
+      },
+      "heavyFee": {
+        "postOfficeFee": 1980,
+        "customerPrice": 2700
+      }
+    },
+    "chubu_hokuriku": {
+      "label": "中部・北陸",
+      "normal": {
+        "60": {
+          "postOfficeFee": 515,
+          "customerPrice": 1000
+        },
+        "80": {
+          "postOfficeFee": 625,
+          "customerPrice": 1200
+        },
+        "100": {
+          "postOfficeFee": 729,
+          "customerPrice": 1250
+        },
+        "120": {
+          "postOfficeFee": 872,
+          "customerPrice": 1400
+        },
+        "140": {
+          "postOfficeFee": 1120,
+          "customerPrice": 2000
+        },
+        "160": {
+          "postOfficeFee": 1407,
+          "customerPrice": 2400
+        },
+        "170": {
+          "postOfficeFee": 1577,
+          "customerPrice": 2600
+        }
+      },
+      "chilled": {
+        "60": {
+          "postOfficeFee": 740,
+          "customerPrice": 1400
+        },
+        "80": {
+          "postOfficeFee": 986,
+          "customerPrice": 1550
+        },
+        "100": {
+          "postOfficeFee": 1548,
+          "customerPrice": 2000
+        },
+        "120": {
+          "postOfficeFee": 1548,
+          "customerPrice": 2000
+        },
+        "140": {
+          "postOfficeFee": 2450,
+          "customerPrice": 3200
+        },
+        "160": {
+          "postOfficeFee": 3507,
+          "customerPrice": 4200
+        }
+      },
+      "heavyFee": {
+        "postOfficeFee": 2080,
+        "customerPrice": 2800
+      }
+    },
+    "kansai": {
+      "label": "関西",
+      "normal": {
+        "60": {
+          "postOfficeFee": 537,
+          "customerPrice": 1050
+        },
+        "80": {
+          "postOfficeFee": 658,
+          "customerPrice": 1250
+        },
+        "100": {
+          "postOfficeFee": 784,
+          "customerPrice": 1350
+        },
+        "120": {
+          "postOfficeFee": 960,
+          "customerPrice": 1550
+        },
+        "140": {
+          "postOfficeFee": 1247,
+          "customerPrice": 2100
+        },
+        "160": {
+          "postOfficeFee": 1577,
+          "customerPrice": 2600
+        },
+        "170": {
+          "postOfficeFee": 1773,
+          "customerPrice": 2800
+        }
+      },
+      "chilled": {
+        "60": {
+          "postOfficeFee": 762,
+          "customerPrice": 1450
+        },
+        "80": {
+          "postOfficeFee": 1019,
+          "customerPrice": 1600
+        },
+        "100": {
+          "postOfficeFee": 1636,
+          "customerPrice": 2300
+        },
+        "120": {
+          "postOfficeFee": 1636,
+          "customerPrice": 2300
+        },
+        "140": {
+          "postOfficeFee": 2577,
+          "customerPrice": 3550
+        },
+        "160": {
+          "postOfficeFee": 3677,
+          "customerPrice": 4550
+        }
+      },
+      "heavyFee": {
+        "postOfficeFee": 2200,
+        "customerPrice": 3000
+      }
+    },
+    "chugoku_shikoku": {
+      "label": "中国・四国",
+      "normal": {
+        "60": {
+          "postOfficeFee": 592,
+          "customerPrice": 1100
+        },
+        "80": {
+          "postOfficeFee": 746,
+          "customerPrice": 1400
+        },
+        "100": {
+          "postOfficeFee": 949,
+          "customerPrice": 1500
+        },
+        "120": {
+          "postOfficeFee": 1207,
+          "customerPrice": 1650
+        },
+        "140": {
+          "postOfficeFee": 1615,
+          "customerPrice": 2500
+        },
+        "160": {
+          "postOfficeFee": 2017,
+          "customerPrice": 3000
+        },
+        "170": {
+          "postOfficeFee": 2299,
+          "customerPrice": 3400
+        }
+      },
+      "chilled": {
+        "60": {
+          "postOfficeFee": 817,
+          "customerPrice": 1550
+        },
+        "80": {
+          "postOfficeFee": 1107,
+          "customerPrice": 1650
+        },
+        "100": {
+          "postOfficeFee": 1882,
+          "customerPrice": 2300
+        },
+        "120": {
+          "postOfficeFee": 1882,
+          "customerPrice": 2300
+        },
+        "140": {
+          "postOfficeFee": 2945,
+          "customerPrice": 3550
+        },
+        "160": {
+          "postOfficeFee": 4117,
+          "customerPrice": 4550
+        }
+      },
+      "heavyFee": {
+        "postOfficeFee": 2410,
+        "customerPrice": 3600
+      }
+    },
+    "kyushu": {
+      "label": "九州",
+      "normal": {
+        "60": {
+          "postOfficeFee": 1175,
+          "customerPrice": 1600
+        },
+        "80": {
+          "postOfficeFee": 1345,
+          "customerPrice": 1700
+        },
+        "100": {
+          "postOfficeFee": 1495,
+          "customerPrice": 1900
+        },
+        "120": {
+          "postOfficeFee": 1837,
+          "customerPrice": 2250
+        },
+        "140": {
+          "postOfficeFee": 2153,
+          "customerPrice": 2900
+        },
+        "160": {
+          "postOfficeFee": 2483,
+          "customerPrice": 3200
+        },
+        "170": {
+          "postOfficeFee": 2751,
+          "customerPrice": 3800
+        }
+      },
+      "chilled": {
+        "60": {
+          "postOfficeFee": 1400,
+          "customerPrice": 1900
+        },
+        "80": {
+          "postOfficeFee": 1706,
+          "customerPrice": 2200
+        },
+        "100": {
+          "postOfficeFee": 2512,
+          "customerPrice": 3000
+        },
+        "120": {
+          "postOfficeFee": 2512,
+          "customerPrice": 3000
+        },
+        "140": {
+          "postOfficeFee": 3483,
+          "customerPrice": 4100
+        },
+        "160": {
+          "postOfficeFee": 4583,
+          "customerPrice": 5200
+        }
+      },
+      "heavyFee": {
+        "postOfficeFee": 2630,
+        "customerPrice": 4100
+      }
+    },
+    "okinawa": {
+      "label": "沖縄",
+      "normal": {
+        "60": {
+          "postOfficeFee": 1175,
+          "customerPrice": 1700
+        },
+        "80": {
+          "postOfficeFee": 1345,
+          "customerPrice": 1800
+        },
+        "100": {
+          "postOfficeFee": 1495,
+          "customerPrice": 2000
+        },
+        "120": {
+          "postOfficeFee": 1837,
+          "customerPrice": 2350
+        },
+        "140": {
+          "postOfficeFee": 2153,
+          "customerPrice": 3000
+        },
+        "160": {
+          "postOfficeFee": 2483,
+          "customerPrice": 3300
+        },
+        "170": {
+          "postOfficeFee": 2751,
+          "customerPrice": 3900
+        }
+      },
+      "chilled": {
+        "60": {
+          "postOfficeFee": 1400,
+          "customerPrice": 1900
+        },
+        "80": {
+          "postOfficeFee": 1706,
+          "customerPrice": 2200
+        },
+        "100": {
+          "postOfficeFee": 2512,
+          "customerPrice": 3000
+        },
+        "120": {
+          "postOfficeFee": 2512,
+          "customerPrice": 3000
+        },
+        "140": {
+          "postOfficeFee": 3483,
+          "customerPrice": 4150
+        },
+        "160": {
+          "postOfficeFee": 4583,
+          "customerPrice": 5250
+        }
+      },
+      "heavyFee": {
+        "postOfficeFee": 2670,
+        "customerPrice": 4100
+      }
+    }
+  }
+}

@@ -117,7 +117,7 @@ export default function CustomerListPage() {
         <div className="max-w-6xl mx-auto px-4 py-4 md:px-8">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <h1 className="text-xl md:text-2xl font-bold text-gray-900 flex items-center gap-2">
-              顧客管理システム
+              顧客管理
               <span className="text-sm font-normal text-gray-400">({filteredCustomers.length}件)</span>
             </h1>
             

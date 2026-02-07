@@ -4,7 +4,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { SigninUser } from "@/types/signinUser";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, onSnapshot } from "firebase/firestore";
 
 type AuthContextType = {
   user: SigninUser | null;
@@ -21,9 +21,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // onAuthStateChanged の中で最新の firebaseUser を受け取るため、
-    // コンポーネントトップレベルでの auth.currentUser 参照は不要です。
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    // 1. Authの状態を監視
+    const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
       try {
         if (!firebaseUser) {
           setSigninUser(null);
@@ -31,41 +30,55 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           return;
         }
 
-        // ⚡️ STEP 1: カスタムクレームから権限を取得
+        // --- STEP 1: トークンから権限(Role)を確定 ---
         const tokenResult = await firebaseUser.getIdTokenResult();
         const isAdmin = !!tokenResult.claims.admin;
 
-        // 初期表示用のユーザーオブジェクトを作成
-        // name が null の可能性があるため、空文字かメールアドレスをフォールバックに使う
+        // Firebase Authの情報を元に初期ユーザーを作成（これだけで一旦アプリは動く）
         const baseUser: SigninUser = {
           uid: firebaseUser.uid,
           email: firebaseUser.email || "",
-          name: firebaseUser.displayName ?? firebaseUser.email?.split("@")[0] ?? "Unknown User",
+          name: firebaseUser.displayName ?? firebaseUser.email?.split("@")[0] ?? "User",
           role: isAdmin ? "admin" : "staff",
         };
 
         setSigninUser(baseUser);
-        setLoading(false); // 🚀 STEP 1完了時点で表示を許可
+        setLoading(false);
 
-        // ⚡️ STEP 2: Firestore から詳細情報（正しい表示名など）をバックグラウンドで取得
-        const snap = await getDoc(doc(db, "employees", firebaseUser.uid));
-        if (snap.exists()) {
-          const employeeData = snap.data();
-          setSigninUser((prev) => (prev ? { 
-            ...prev, 
-            name: employeeData.name || prev.name 
-          } : null));
-        }
+        // --- STEP 2: Firestoreから詳細プロファイルを同期 ---
+        // getDocではなくonSnapshotを使うことで、オフラインエラーを回避しつつ
+        // キャッシュがあれば即反映、オンライン復帰で自動更新される
+        const docRef = doc(db, "employees", firebaseUser.uid);
+        
+        const unsubscribeSnapshot = onSnapshot(
+          docRef,
+          (snap) => {
+            if (snap.exists()) {
+              const employeeData = snap.data();
+              setSigninUser((prev) => (prev ? { 
+                ...prev, 
+                name: employeeData.name || prev.name 
+              } : null));
+            }
+          },
+          (error) => {
+            // オフライン等のエラーをキャッチするが、Auth情報はあるので処理は止めない
+            console.warn("Firestore profile sync error (Offline?):", error);
+          }
+        );
+
+        // クリーンアップ時（ログアウト時等）にSnapshotの監視も止める
+        return () => unsubscribeSnapshot();
+
       } catch (e) {
         console.error("Auth process error:", e);
         setLoading(false);
       }
     });
 
-    return () => unsubscribe();
+    return () => unsubscribeAuth();
   }, []);
 
-  // Contextに渡す値を signinUser に修正
   return (
     <AuthContext.Provider value={{ user: signinUser, loading }}>
       {children}
