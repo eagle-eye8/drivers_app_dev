@@ -95,7 +95,7 @@ export default function AdminDashboard() {
             <Link 
               key={emp.id} 
               href={`/orders/${emp.id}?date=${today}`} 
-              // prefetch={false} // 必要に応じて。ページ遷移を高速化したいならtrue、初期ロードを軽くしたいならfalse
+              prefetch={false} 
               className="group bg-white rounded-2xl p-4 border border-gray-100 shadow-sm hover:shadow-md transition-all flex justify-between items-center"
             >
               <div className="space-y-1">
