@@ -3,13 +3,13 @@
   "short_name": "Spirit",
   "icons": [
     {
-      "src": "/https://spirit-git-main-ts-projects-eec8747a.vercel.app/web-app-manifest-192x192.png",
+      "src": "/https://spirit-green.vercel.app/web-app-manifest-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "/https://spirit-git-main-ts-projects-eec8747a.vercel.app/web-app-manifest-512x512.png",
+      "src": "/https://spirit-green.vercel.app/web-app-manifest-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
