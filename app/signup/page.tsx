@@ -4,7 +4,6 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image"; // Imageコンポーネント
 import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { auth } from "@/lib/firebase";
-import { useRouter } from "next/navigation";
 
 export default function SignUp() {
   const [email, setEmail] = useState("");

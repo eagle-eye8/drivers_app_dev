@@ -120,13 +120,14 @@ export default function CustomerListPage() {
               顧客管理
               <span className="text-sm font-normal text-gray-400">({filteredCustomers.length}件)</span>
             </h1>
-            
+
             <div className="flex items-center gap-2">
               {/* 検索バー */}
               <div className="relative flex-1 sm:w-64">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                 <input
-                  type="tel"
+                  type="text"
+                  inputMode="search" // スマホのキーボードに「検索」ボタンを表示させる
                   placeholder="名前・電話番号で検索..."
                   className="w-full pl-10 pr-4 py-2 bg-gray-100 border-transparent rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 transition-all outline-none text-sm"
                   value={searchQuery}
@@ -134,10 +135,7 @@ export default function CustomerListPage() {
                 />
               </div>
               {/* 追加ボタン */}
-              <button 
-                onClick={handleCreateOpen}
-                className="bg-blue-600 text-white p-2 sm:px-4 sm:py-2 rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-200 transition flex items-center gap-2"
-              >
+              <button onClick={handleCreateOpen} className="bg-blue-600 text-white p-2 sm:px-4 sm:py-2 rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-200 transition flex items-center gap-2">
                 <UserPlus size={20} />
                 <span className="hidden sm:inline font-medium">新規追加</span>
               </button>
@@ -168,8 +166,14 @@ export default function CustomerListPage() {
                         <div className="text-xs text-gray-400 font-mono">{c.id.slice(0, 8)}</div>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-600">
-                        <div className="flex items-center gap-2"><Phone size={14} className="text-gray-300" />{c.phone}</div>
-                        <div className="flex items-center gap-2 mt-1"><Mail size={14} className="text-gray-300" />{c.email || "-"}</div>
+                        <div className="flex items-center gap-2">
+                          <Phone size={14} className="text-gray-300" />
+                          {c.phone}
+                        </div>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Mail size={14} className="text-gray-300" />
+                          {c.email || "-"}
+                        </div>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-500">
                         <div className="flex items-start gap-1 max-w-[200px]">
@@ -179,8 +183,12 @@ export default function CustomerListPage() {
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button onClick={() => handleEditOpen(c)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"><Edit2 size={18} /></button>
-                          <button onClick={() => handleDeleteClick(c)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"><Trash2 size={18} /></button>
+                          <button onClick={() => handleEditOpen(c)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition">
+                            <Edit2 size={18} />
+                          </button>
+                          <button onClick={() => handleDeleteClick(c)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition">
+                            <Trash2 size={18} />
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -199,14 +207,29 @@ export default function CustomerListPage() {
                       <p className="text-xs text-blue-500 font-medium">{c.kana}</p>
                     </div>
                     <div className="flex gap-2">
-                      <button onClick={() => handleEditOpen(c)} className="p-2.5 bg-gray-50 text-blue-600 rounded-xl active:scale-95 transition"><Edit2 size={18} /></button>
-                      <button onClick={() => handleDeleteClick(c)} className="p-2.5 bg-gray-50 text-red-600 rounded-xl active:scale-95 transition"><Trash2 size={18} /></button>
+                      <button onClick={() => handleEditOpen(c)} className="p-2.5 bg-gray-50 text-blue-600 rounded-xl active:scale-95 transition">
+                        <Edit2 size={18} />
+                      </button>
+                      <button onClick={() => handleDeleteClick(c)} className="p-2.5 bg-gray-50 text-red-600 rounded-xl active:scale-95 transition">
+                        <Trash2 size={18} />
+                      </button>
                     </div>
                   </div>
                   <div className="space-y-2 text-sm text-gray-600 bg-gray-50 p-3 rounded-xl">
-                    <div className="flex items-center gap-3"><Phone size={16} className="text-gray-400" />{c.phone || "未登録"}</div>
-                    {c.email && <div className="flex items-center gap-3"><Mail size={16} className="text-gray-400" />{c.email}</div>}
-                    <div className="flex items-start gap-3"><MapPin size={16} className="text-gray-400 mt-0.5 shrink-0" />{c.address}</div>
+                    <div className="flex items-center gap-3">
+                      <Phone size={16} className="text-gray-400" />
+                      {c.phone || "未登録"}
+                    </div>
+                    {c.email && (
+                      <div className="flex items-center gap-3">
+                        <Mail size={16} className="text-gray-400" />
+                        {c.email}
+                      </div>
+                    )}
+                    <div className="flex items-start gap-3">
+                      <MapPin size={16} className="text-gray-400 mt-0.5 shrink-0" />
+                      {c.address}
+                    </div>
                   </div>
                 </div>
               ))}
