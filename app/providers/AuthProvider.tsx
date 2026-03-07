@@ -1,89 +1,116 @@
 "use client";
 
-import { onAuthStateChanged } from "firebase/auth";
-import { auth, db } from "@/lib/firebase";
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, useCallback, ReactNode } from "react";
+import { onIdTokenChanged, User as FirebaseUser } from "firebase/auth";
+import { auth } from "@/lib/firebase";
+import { setCookie, deleteCookie } from "cookies-next";
 import { SigninUser } from "@/types/signinUser";
-import { doc, onSnapshot } from "firebase/firestore";
+
+// ─── Types ───────────────────────────────────────────────────────────────────
 
 type AuthContextType = {
   user: SigninUser | null;
   loading: boolean;
+  refreshUser: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
+  refreshUser: async () => {},
 });
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [signinUser, setSigninUser] = useState<SigninUser | null>(null);
+// ─── キャッシュ ───────────────────────────────────────────────────────────────
+
+const userCache = new Map<string, SigninUser>();
+
+// ─── API経由でユーザー情報取得 ────────────────────────────────────────────────
+/**
+ * フロントから直接Firestoreを叩かずAPIルート経由にする。
+ * 理由: onIdTokenChanged発火直後はFirestore SDKがトークンを
+ * まだ内部反映していないため "client is offline" エラーが起きる。
+ * APIルートはadminDbを使うためクライアントの認証状態に依存しない。
+ */
+async function fetchUserFromApi(token: string, uid: string, forceRefresh = false): Promise<SigninUser> {
+  if (!forceRefresh && userCache.has(uid)) {
+    return userCache.get(uid)!;
+  }
+
+  const res = await fetch("/api/me", {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  });
+
+  if (!res.ok) {
+    throw new Error(`/api/me failed: ${res.status}`);
+  }
+
+  const data = await res.json();
+  const appUser: SigninUser = data.user;
+  userCache.set(uid, appUser);
+  return appUser;
+}
+
+// ─── Cookie 管理 ─────────────────────────────────────────────────────────────
+
+const SESSION_COOKIE = "session";
+const COOKIE_OPTIONS = { path: "/", maxAge: 60 * 60 * 24 } as const;
+
+function clearSessionCookie() {
+  deleteCookie(SESSION_COOKIE, { path: "/" });
+}
+
+// ─── Provider ────────────────────────────────────────────────────────────────
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<SigninUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const firebaseUserRef = useRef<FirebaseUser | null>(null);
+  const tokenRef = useRef<string | null>(null);
+
+  const refreshUser = useCallback(async () => {
+    if (!firebaseUserRef.current || !tokenRef.current) return;
+    try {
+      const updated = await fetchUserFromApi(tokenRef.current, firebaseUserRef.current.uid, true);
+      setUser(updated);
+    } catch (err) {
+      console.error("refreshUser failed:", err);
+    }
+  }, []);
 
   useEffect(() => {
-    // 1. Authの状態を監視
-    const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
-      try {
-        if (!firebaseUser) {
-          setSigninUser(null);
-          setLoading(false);
-          return;
-        }
+    const unsubscribe = onIdTokenChanged(auth, async (firebaseUser) => {
+      firebaseUserRef.current = firebaseUser;
 
-        // --- STEP 1: トークンから権限(Role)を確定 ---
-        const tokenResult = await firebaseUser.getIdTokenResult();
-        const isAdmin = !!tokenResult.claims.admin;
-
-        // Firebase Authの情報を元に初期ユーザーを作成（これだけで一旦アプリは動く）
-        const baseUser: SigninUser = {
-          uid: firebaseUser.uid,
-          email: firebaseUser.email || "",
-          name: firebaseUser.displayName ?? firebaseUser.email?.split("@")[0] ?? "User",
-          role: isAdmin ? "admin" : "staff",
-        };
-
-        setSigninUser(baseUser);
+      if (!firebaseUser) {
+        setUser(null);
+        tokenRef.current = null;
+        clearSessionCookie();
         setLoading(false);
+        return;
+      }
 
-        // --- STEP 2: Firestoreから詳細プロファイルを同期 ---
-        // getDocではなくonSnapshotを使うことで、オフラインエラーを回避しつつ
-        // キャッシュがあれば即反映、オンライン復帰で自動更新される
-        const docRef = doc(db, "employees", firebaseUser.uid);
-        
-        const unsubscribeSnapshot = onSnapshot(
-          docRef,
-          (snap) => {
-            if (snap.exists()) {
-              const employeeData = snap.data();
-              setSigninUser((prev) => (prev ? { 
-                ...prev, 
-                name: employeeData.name || prev.name 
-              } : null));
-            }
-          },
-          (error) => {
-            // オフライン等のエラーをキャッチするが、Auth情報はあるので処理は止めない
-            console.warn("Firestore profile sync error (Offline?):", error);
-          }
-        );
+      try {
+        // トークン取得 → Cookie保存 → API呼び出し（直列）
+        const token = await firebaseUser.getIdToken(false);
+        tokenRef.current = token;
+        setCookie(SESSION_COOKIE, token, COOKIE_OPTIONS);
 
-        // クリーンアップ時（ログアウト時等）にSnapshotの監視も止める
-        return () => unsubscribeSnapshot();
-
-      } catch (e) {
-        console.error("Auth process error:", e);
+        // APIルート経由でemployee情報を取得（adminDbを使うので安定）
+        const appUser = await fetchUserFromApi(token, firebaseUser.uid, false);
+        setUser(appUser);
+      } catch (err) {
+        console.error("AuthProvider: ユーザー情報の取得に失敗", err);
+        setUser(null);
+      } finally {
         setLoading(false);
       }
     });
 
-    return () => unsubscribeAuth();
+    return () => unsubscribe();
   }, []);
 
-  return (
-    <AuthContext.Provider value={{ user: signinUser, loading }}>
-      {children}
-    </AuthContext.Provider>
-  );
-};
+  return <AuthContext.Provider value={{ user, loading, refreshUser }}>{children}</AuthContext.Provider>;
+}
 
 export const useAuth = () => useContext(AuthContext);
