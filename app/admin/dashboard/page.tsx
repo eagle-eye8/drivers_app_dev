@@ -2,7 +2,7 @@
 
 import useSWR from "swr";
 import Link from "next/link";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { DashboardEmployee, OrderWithCustomer } from "@/types/orderWithCustomer";
 import { PlusIcon, UserIcon, FileUser, ListPlus } from "lucide-react";
@@ -39,7 +39,6 @@ export default function AdminDashboard() {
 
   const { todayOrders = [], employees = [], kpi = { orderCount: 0, pendingCount: 0, totalAmount: 0 }, customers = [] } = data.data;
 
-  // 重要：重い計算は useMemo でラップして再レンダリング時の負荷を削る
   const progressStats = useMemo(() => {
     const completed = todayOrders.filter((o: OrderWithCustomer) => o.status === "completed").length;
     const total = todayOrders.length;
