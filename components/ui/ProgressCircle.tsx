@@ -12,44 +12,81 @@ export default function ProgressCircle({ current, total, size = 120, strokeWidth
   const radius = (size - strokeWidth) / 2;
   const circumference = radius * 2 * Math.PI;
   const offset = circumference - (percentage / 100) * circumference;
+  const isComplete = total > 0 && current >= total;
+
+  // サイズ閾値で表示を切り替え（小サイズはコンパクトに）
+  const isSmall = size < 80;
 
   return (
     <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
-      {/* 1. 背景の強力なグロー（発光感） */}
-      <div className={`absolute inset-0 rounded-full blur-2xl transition-all duration-700 opacity-30 ${percentage === 100 ? "bg-lime-400" : "bg-cyan-400"}`} />
+      {/* グロー */}
+      <div className={`absolute inset-0 rounded-full blur-xl transition-all duration-700 ${isComplete ? "opacity-25 bg-emerald-400" : total === 0 ? "opacity-0" : "opacity-20 bg-cyan-400"}`} />
 
-      <svg className="w-full h-full transform -rotate-90 drop-shadow-md" viewBox={`0 0 ${size} ${size}`}>
+      <svg className="w-full h-full transform -rotate-90" viewBox={`0 0 ${size} ${size}`}>
         <defs>
-          {/* 明るいネオン・シアンからブルーへのグラデーション */}
-          <linearGradient id="brightGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#22d3ee" /> {/* cyan-400 */}
-            <stop offset="100%" stopColor="#3b82f6" /> {/* blue-500 */}
+          <linearGradient id={`grad-progress-${size}`} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#22d3ee" />
+            <stop offset="100%" stopColor="#3b82f6" />
           </linearGradient>
-          {/* 完遂時のネオン・ライム */}
-          <linearGradient id="glowSuccess" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#a3e635" /> {/* lime-400 */}
-            <stop offset="100%" stopColor="#22c55e" /> {/* green-500 */}
+          <linearGradient id={`grad-complete-${size}`} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#34d399" />
+            <stop offset="100%" stopColor="#10b981" />
           </linearGradient>
         </defs>
 
-        {/* 背景レール（より明るい白に近いグレー） */}
-        <circle cx={size / 2} cy={size / 2} r={radius} fill="transparent" stroke="#f1f5f9" strokeWidth={strokeWidth} />
+        {/* レール */}
+        <circle cx={size / 2} cy={size / 2} r={radius} fill="transparent" stroke="#e2e8f0" strokeWidth={strokeWidth} />
 
-        {/* 進捗リング：発色の良いグラデーション */}
-        <circle cx={size / 2} cy={size / 2} r={radius} fill="transparent" stroke={percentage === 100 ? "url(#glowSuccess)" : "url(#brightGradient)"} strokeWidth={strokeWidth} strokeDasharray={circumference} strokeDashoffset={offset} strokeLinecap="round" style={{ transition: "stroke-dashoffset 1.5s cubic-bezier(0.22, 1, 0.36, 1)" }} className="drop-shadow-[0_0_5px_rgba(34,211,238,0.5)]" />
+        {/* 進捗リング */}
+        {total > 0 && <circle cx={size / 2} cy={size / 2} r={radius} fill="transparent" stroke={isComplete ? `url(#grad-complete-${size})` : `url(#grad-progress-${size})`} strokeWidth={strokeWidth} strokeDasharray={circumference} strokeDashoffset={offset} strokeLinecap="round" style={{ transition: "stroke-dashoffset 1.2s cubic-bezier(0.22, 1, 0.36, 1)" }} />}
       </svg>
 
-      {/* --- 中央テキスト：数字と％を力強く強調 --- */}
-      <div className="absolute inset-0 flex items-center justify-center leading-none">
-        <div className="flex items-center">
-          <span className="text-1xl text-slate-900 tracking-tighter tabular-nums drop-shadow-sm">{percentage}</span>
-          {/* ％を大きく、色を付けてはっきりと */}
-          <span className={`text-xs font-black ml-0.5 mt-1 transition-colors duration-500 ${percentage === 100 ? "text-lime-500" : "text-cyan-500"}`}>%</span>
-        </div>
+      {/* 中央テキスト */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center leading-none select-none">
+        {total === 0 ? (
+          // タスクなし
+          <span style={{ fontSize: size * 0.16 }} className="font-bold text-slate-300">
+            —
+          </span>
+        ) : isSmall ? (
+          // 小サイズ: 分数のみ（シンプル）
+          <div className="flex items-baseline" style={{ gap: size * 0.02 }}>
+            <span style={{ fontSize: size * 0.28, lineHeight: 1 }} className={`font-black tabular-nums ${isComplete ? "text-emerald-500" : "text-slate-800"}`}>
+              {current}
+            </span>
+            <span style={{ fontSize: size * 0.16 }} className="font-bold text-slate-400">
+              /{total}
+            </span>
+          </div>
+        ) : (
+          // 大サイズ: 分数 ＋ パーセント
+          <>
+            {/* 分数（メイン） */}
+            <div className="flex items-baseline" style={{ gap: size * 0.015 }}>
+              <span style={{ fontSize: size * 0.22, lineHeight: 1 }} className={`font-black tabular-nums tracking-tight ${isComplete ? "text-emerald-500" : "text-slate-800"}`}>
+                {current}
+              </span>
+              <span style={{ fontSize: size * 0.13 }} className="font-bold text-slate-400 mb-px">
+                /
+              </span>
+              <span style={{ fontSize: size * 0.16, lineHeight: 1 }} className="font-bold text-slate-500 tabular-nums">
+                {total}
+              </span>
+            </div>
+            {/* パーセント（サブ） */}
+            <span style={{ fontSize: size * 0.11, marginTop: size * 0.03 }} className={`font-semibold tabular-nums transition-colors duration-500 ${isComplete ? "text-emerald-400" : "text-cyan-500"}`}>
+              {percentage}%
+            </span>
+          </>
+        )}
       </div>
 
-      {/* 完了メッセージ（リッチ版） */}
-      {percentage === 100 && <div className="absolute bottom-1 bg-lime-500 text-white text-[7px] font-black px-1.5 py-0.5 rounded-full shadow-sm animate-bounce">COMPLETE!</div>}
+      {/* 完了バッジ（大サイズのみ） */}
+      {isComplete && !isSmall && (
+        <div className="absolute -bottom-1 bg-emerald-500 text-white font-black px-2 py-0.5 rounded-full shadow-md animate-bounce" style={{ fontSize: size * 0.075 }}>
+          DONE
+        </div>
+      )}
     </div>
   );
 }

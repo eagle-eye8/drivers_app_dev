@@ -32,8 +32,6 @@ export default function AdminDashboard() {
     fallbackData: { success: false, data: { todayOrders: [], employees: [], kpi: { orderCount: 0, pendingCount: 0, totalAmount: 0 } } },
   });
 
-  if (error) return <div className="p-10 text-red-500">エラー: {error}</div>;
-  if (!data) return <div className="p-10 text-gray-500">データがありません</div>;
 
   const { todayOrders = [], employees = [], kpi = { orderCount: 0, pendingCount: 0, totalAmount: 0 } } = data.data;
 
