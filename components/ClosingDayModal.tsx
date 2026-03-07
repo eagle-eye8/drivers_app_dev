@@ -3,6 +3,7 @@
 import { useParams } from "next/navigation";
 import Modal from "./ui/Modal";
 import { useSnackbar } from "./ui/SnackbarProvider";
+import { getJstDateString } from "@/lib/utils/date";
 
 interface ClosingDayModalProps {
   isOpen: boolean;
@@ -17,8 +18,8 @@ export default function ClosingDayModal({ isOpen, onClose, onSuccess }: ClosingD
 
   const handleSave = async (formData: any) => {
     // 日付の取得
-    const today = new Date().toISOString().split("T")[0];
-
+      const today = getJstDateString();
+    
     // 保存用データの構築
     const expenses = [
       { category: "ガソリン代", amount: Number(formData.gas) || 0 },

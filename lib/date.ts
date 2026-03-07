@@ -3,7 +3,7 @@
 /**
  * "YYYY-MM-DD"（JST）→ JST 0:00 の Date オブジェクト
  */
-export function jstMidnightFromDateString(dateStr: string): Date {
+export function getJstMidnight(dateStr: string): Date {
   return new Date(`${dateStr}T00:00:00+09:00`);
 }
 
