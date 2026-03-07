@@ -84,14 +84,13 @@ export async function GET() {
       assignedOrderCount: orderStatsByEmployee.get(emp.id)?.assigned || 0,
       completedOrderCount: orderStatsByEmployee.get(emp.id)?.completed || 0,
     }));
-    
+
     return NextResponse.json({
       success: true,
       data: {
         todayOrders,
         employees: dashboardEmployees,
         kpi: { orderCount: todayOrders.length, totalAmount, pendingCount },
-        customers: Object.values(customersMap),
       },
     });
   } catch (err) {

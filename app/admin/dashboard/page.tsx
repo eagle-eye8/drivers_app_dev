@@ -3,7 +3,6 @@
 import useSWR from "swr";
 import Link from "next/link";
 import { useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
 import { DashboardEmployee, OrderWithCustomer } from "@/types/orderWithCustomer";
 import { PlusIcon, UserIcon, FileUser, ListPlus } from "lucide-react";
 import CreateOrderModal from "@/components/orders/CreateOrderModal";
@@ -17,7 +16,6 @@ import { LoadingOverlay } from "@/components/ui/LoadingOverlay";
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 export default function AdminDashboard() {
-  const router = useRouter();
   const today = getJstDateString();
   const { user, loading: authLoading } = useAuth();
 
@@ -30,14 +28,14 @@ export default function AdminDashboard() {
 
   const { data, isLoading, error } = useSWR(shouldFetch ? `/api/dashboard?date=${today}` : null, fetcher, {
     revalidateOnFocus: false,
-    dedupingInterval: 60000, // ダッシュボードなら1分くらいキャッシュしてOK
-    fallbackData: { success: false, data: { todayOrders: [], employees: [], kpi: { orderCount: 0, pendingCount: 0, totalAmount: 0 }, customers: [] } },
+    dedupingInterval: 60000,
+    fallbackData: { success: false, data: { todayOrders: [], employees: [], kpi: { orderCount: 0, pendingCount: 0, totalAmount: 0 } } },
   });
 
   if (error) return <div className="p-10 text-red-500">エラー: {error}</div>;
   if (!data) return <div className="p-10 text-gray-500">データがありません</div>;
 
-  const { todayOrders = [], employees = [], kpi = { orderCount: 0, pendingCount: 0, totalAmount: 0 }, customers = [] } = data.data;
+  const { todayOrders = [], employees = [], kpi = { orderCount: 0, pendingCount: 0, totalAmount: 0 } } = data.data;
 
   const progressStats = useMemo(() => {
     const completed = todayOrders.filter((o: OrderWithCustomer) => o.status === "completed").length;
@@ -133,7 +131,7 @@ export default function AdminDashboard() {
         </button>
       </div>
 
-      {isOrderModalOpen && <CreateOrderModal isOpen={isOrderModalOpen} onClose={() => setIsOrderModalOpen(false)} customers={customers} employees={employees} />}
+      {isOrderModalOpen && <CreateOrderModal isOpen={isOrderModalOpen} onClose={() => setIsOrderModalOpen(false)} employees={employees} />}
       {isCustomerModalOpen && <CreateCustomerModal isOpen={isCustomerModalOpen} onClose={() => setIsCustomerModalOpen(false)} />}
       {isSummaryOpen && <DailySummaryModal onClose={() => setIsSummaryOpen(false)} isAdmin={isAdmin} uid={user?.uid} orders={todayOrders} />}
     </div>

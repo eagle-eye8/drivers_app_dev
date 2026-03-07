@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Customer } from "@/types/customer";
 import { AssignedEmployee } from "@/types/orderWithCustomer";
-import { X, Plus, Calendar, User, Users } from "lucide-react";
+import { X, Plus, Calendar, User, Users, Loader2 } from "lucide-react";
 import Button from "../ui/button";
 import { LoadingOverlay } from "../ui/LoadingOverlay";
 import { useSnackbar } from "../ui/SnackbarProvider";
@@ -13,16 +13,19 @@ import { mutate } from "swr";
 type Props = {
   isOpen: boolean;
   onClose: () => void;
-  customers: Customer[];
   employees: AssignedEmployee[];
 };
 
-export default function CreateOrderModal({ isOpen, onClose, customers, employees }: Props) {
+export default function CreateOrderModal({ isOpen, onClose, employees }: Props) {
   const { showSnackbar } = useSnackbar();
   const [loading, setLoading] = useState(false);
 
   const [phone, setPhone] = useState("");
   const [matchedCustomer, setMatchedCustomer] = useState<Customer | null>(null);
+  const [searching, setSearching] = useState(false);
+  const [notFound, setNotFound] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const today = getJstDateString();
 
   const [form, setForm] = useState({
@@ -31,37 +34,51 @@ export default function CreateOrderModal({ isOpen, onClose, customers, employees
     assignedUid: "",
   });
 
-  /* -------------------------------
-     電話番号 → 顧客一致ロジック
-  -------------------------------- */
+  // ─── 電話番号入力 → debounce → API検索 ──────────────────────────────────
   useEffect(() => {
-    if (!phone) {
-      setMatchedCustomer(null);
-      setForm((f) => ({ ...f, customerId: "" }));
-      return;
-    }
+    // リセット
+    setMatchedCustomer(null);
+    setNotFound(false);
+    setForm((f) => ({ ...f, customerId: "" }));
+
+    if (debounceRef.current) clearTimeout(debounceRef.current);
 
     const normalized = phone.replace(/[-\s]/g, "");
-    const found = customers.find((c) => c.phone?.replace(/[-\s]/g, "") === normalized);
+    // 10桁未満は検索しない
+    if (normalized.length < 10) return;
 
-    if (found) {
-      setMatchedCustomer(found);
-      setForm((f) => ({ ...f, customerId: found.id }));
-    } else {
-      setMatchedCustomer(null);
-      setForm((f) => ({ ...f, customerId: "" }));
-    }
-  }, [phone, customers]);
+    debounceRef.current = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const res = await fetch(`/api/customers/search?phone=${encodeURIComponent(normalized)}`);
+        if (!res.ok) throw new Error();
+        const data = await res.json();
 
-  /* -------------------------------
-     送信
-  -------------------------------- */
+        if (data.customer) {
+          setMatchedCustomer(data.customer);
+          setForm((f) => ({ ...f, customerId: data.customer.id }));
+          setNotFound(false);
+        } else {
+          setNotFound(true);
+        }
+      } catch {
+        setNotFound(true);
+      } finally {
+        setSearching(false);
+      }
+    }, 400); // 400ms待ってから検索（打鍵ごとにAPIを叩かない）
+
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [phone]);
+
+  // ─── 送信 ────────────────────────────────────────────────────────────────
   const handleSubmit = async () => {
     if (!form.customerId || !form.reservationDate) {
       showSnackbar("顧客と集荷日を入力してください", "error");
       return;
     }
-
     setLoading(true);
     try {
       const res = await fetch("/api/orders", {
@@ -81,10 +98,9 @@ export default function CreateOrderModal({ isOpen, onClose, customers, employees
   };
 
   if (!isOpen) return null;
-  if (loading) return <LoadingOverlay text="注文登録中..." />;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
+    <div className="fixed inset-0 z-100 bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
       <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl w-full max-w-xl shadow-2xl border border-slate-700 overflow-hidden">
         {/* ヘッダー */}
         <div className="bg-slate-800/50 border-b border-slate-700 p-6">
@@ -95,7 +111,7 @@ export default function CreateOrderModal({ isOpen, onClose, customers, employees
               </div>
               <div>
                 <h2 className="text-xl font-bold text-white">新規集荷注文</h2>
-                <p className="text-sm text-slate-400">電話番号で顧客を一致させます</p>
+                <p className="text-sm text-slate-400">電話番号で顧客を検索します</p>
               </div>
             </div>
             <button onClick={onClose} className="text-slate-400 hover:text-white p-2 hover:bg-slate-700 rounded-lg">
@@ -121,18 +137,26 @@ export default function CreateOrderModal({ isOpen, onClose, customers, employees
               <User className="w-4 h-4 text-cyan-400" />
               顧客（電話番号）<span className="text-red-400">*</span>
             </label>
+            <div className="relative">
+              <input type="tel" placeholder="09012345678" value={phone} onChange={(e) => setPhone(e.target.value.replace(/[-\s]/g, ""))} className="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-cyan-500 pr-10" />
+              {/* 検索中スピナー */}
+              {searching && (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  <Loader2 className="w-4 h-4 text-cyan-400 animate-spin" />
+                </div>
+              )}
+            </div>
 
-            <input type="tel" placeholder="09012345678" value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-cyan-500" />
-
-            {phone && (
+            {/* 検索結果フィードバック */}
+            {!searching && phone.replace(/[-\s]/g, "").length >= 5 && (
               <div className="mt-2">
                 {matchedCustomer ? (
                   <div className="text-sm text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 rounded-lg px-3 py-2">
                     ✔ {matchedCustomer.name}（{matchedCustomer.phone}）
                   </div>
-                ) : (
-                  <div className="text-sm text-red-400">この電話番号の顧客が見つかりません</div>
-                )}
+                ) : notFound ? (
+                  <div className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">この電話番号の顧客が見つかりません</div>
+                ) : null}
               </div>
             )}
           </div>
@@ -160,7 +184,7 @@ export default function CreateOrderModal({ isOpen, onClose, customers, employees
             <Button variant="ghost" onClick={onClose} className="flex-1">
               キャンセル
             </Button>
-            <Button variant="primary" onClick={handleSubmit} loading={loading} disabled={!matchedCustomer} className="flex-1">
+            <Button variant="primary" onClick={handleSubmit} loading={loading} disabled={!matchedCustomer || searching} className="flex-1">
               登録
             </Button>
           </div>
