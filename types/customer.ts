@@ -14,3 +14,8 @@ export type Customer = {
   createdAt: FirestoreTimestamp;
   updatedAt: FirestoreTimestamp;
 };
+
+export type CustomerForm = Omit<
+  Customer,
+  "id" | "location" | "createdAt" | "updatedAt"
+>;

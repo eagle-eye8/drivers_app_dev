@@ -7,6 +7,7 @@ import { LoadingOverlay } from "@/components/ui/LoadingOverlay";
 import { useSnackbar } from "@/components/ui/SnackbarProvider";
 import { mutate } from "swr";
 import { getJstDateString } from "@/lib/utils/date";
+import { CustomerForm } from "@/types/customer";
 
 type Props = {
   isOpen: boolean;
@@ -24,8 +25,9 @@ export default function CreateCustomerModal({ isOpen, onClose }: Props) {
   const { showSnackbar } = useSnackbar();
   const [loading, setLoading] = useState(false);
 
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<CustomerForm>({
     name: "",
+    kana: "",
     email: "",
     phone: "",
     address: "",
@@ -84,8 +86,9 @@ export default function CreateCustomerModal({ isOpen, onClose }: Props) {
         {/* ================= Body ================= */}
         <div className="p-6 space-y-6 max-h-[calc(90vh-200px)] overflow-y-auto">
           <FormInput icon={UserPlus} placeholder="名前（必須）" value={form.name} onChange={(v) => setForm((prev) => ({ ...prev, name: v }))} />
-          <FormInput icon={Mail} placeholder="メールアドレス（任意）" value={form.email} onChange={(v) => setForm((prev) => ({ ...prev, email: v }))} />
-          <FormInput icon={Phone} placeholder="電話番号（任意）" value={form.phone} onChange={(v) => setForm((prev) => ({ ...prev, phone: v }))} />
+          <FormInput icon={UserPlus} placeholder="フリガナ（必須）" value={form.kana} onChange={(v) => setForm((prev) => ({ ...prev, kana: v }))} />
+          <FormInput icon={Mail} placeholder="メールアドレス（任意）" value={form.email ?? ""} onChange={(v) => setForm((prev) => ({ ...prev, email: v }))} />
+          <FormInput icon={Phone} placeholder="電話番号（任意）" value={form.phone ?? ""} onChange={(v) => setForm((prev) => ({ ...prev, phone: v }))} />
           <FormInput icon={MapPin} placeholder="住所（必須）" value={form.address} onChange={(v) => setForm((prev) => ({ ...prev, address: v }))} />
 
           <p className="text-xs text-slate-400">※ 住所から緯度・経度を自動取得します。取得できない場合でも、後から顧客編集画面で設定できます。</p>
