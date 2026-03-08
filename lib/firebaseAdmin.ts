@@ -14,7 +14,7 @@ if (!privateKey || !clientEmail || !projectId) {
 
 // 秘密鍵の改行を復元
 // FIREBASE_PRIVATE_KEY内の \\n を \n に置換
-const correctedPrivateKey = privateKey.replace(/\\n/g, "\n"); 
+const correctedPrivateKey = privateKey.replace(/\\n/g, "\n");
 
 const serviceAccount = {
   type: "service_account",

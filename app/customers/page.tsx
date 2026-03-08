@@ -8,6 +8,13 @@ import { useSnackbar } from "@/components/ui/SnackbarProvider";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import { LoadingOverlay } from "@/components/ui/LoadingOverlay";
 
+export type EditCustomer = {
+  name: string;
+  phone: string;
+  mail: string;
+  address: string;
+};
+
 const customerFields: any[] = [
   { label: "名前", name: "name", type: "text" },
   { label: "フリガナ", name: "kana", type: "text" },
@@ -87,7 +94,7 @@ export default function CustomerListPage() {
     }
   };
 
-  const handleSave = async (formData: any) => {
+  const handleSave = async (formData: Customer) => {
     setIsLoading(true);
     const isEdit = !!selectedCustomer?.id;
     const url = isEdit ? `/api/customers/${selectedCustomer.id}` : "/api/customers";
@@ -162,8 +169,8 @@ export default function CustomerListPage() {
                   {filteredCustomers.map((c) => (
                     <tr key={c.id} className="hover:bg-blue-50/30 transition-colors group">
                       <td className="px-6 py-4">
+                        <div className="text-xs text-gray-400 font-mono">{c.kana}</div>
                         <div className="font-bold text-gray-900">{c.name}</div>
-                        <div className="text-xs text-gray-400 font-mono">{c.id.slice(0, 8)}</div>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-600">
                         <div className="flex items-center gap-2">

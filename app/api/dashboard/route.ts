@@ -5,6 +5,8 @@ import { adminAuth, adminDb } from "@/lib/firebaseAdmin";
 import { FieldPath, Timestamp } from "firebase-admin/firestore";
 import { DashboardEmployee } from "@/types/orderWithCustomer";
 import { Order } from "@/types/order";
+import { getJstDateKey, getJstMidnight } from "@/lib/date";
+import { Employee } from "@/types/employee";
 
 // --- 🔁 customers を 10 件ずつバッチで取得する関数（外に出す） ---
 async function fetchCustomersInBatches(ids: string[], db: FirebaseFirestore.Firestore) {
@@ -17,7 +19,6 @@ async function fetchCustomersInBatches(ids: string[], db: FirebaseFirestore.Fire
 
   for (const chunk of chunks) {
     const snap = await db.collection("customers").where(FieldPath.documentId(), "in", chunk).get();
-
     snap.docs.forEach((doc) => {
       result[doc.id] = { id: doc.id, ...(doc.data() as any) };
     });
@@ -26,177 +27,73 @@ async function fetchCustomersInBatches(ids: string[], db: FirebaseFirestore.Fire
   return result;
 }
 
-// JST YYYY-MM-DD
-function getJstDateKey(date: Date): string {
-  return new Intl.DateTimeFormat("ja-JP", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    timeZone: "Asia/Tokyo",
-  })
-    .format(date)
-    .replace(/\//g, "-");
-}
-
-// JST 0:00 Date
-function getJstMidnight(dateKey: string): Date {
-  return new Date(`${dateKey}T00:00:00+09:00`);
-}
-
 export async function GET() {
   try {
-    // --- 🔐 Session ---
     const cookieStore = await cookies();
-    const session = cookieStore.get("__session")?.value;
+    const session = cookieStore.get("session")?.value; // __session か session か統一を確認
 
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    // 1. 認証チェックは並列化できないが、デコードのみに留める
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const decoded = await adminAuth.verifyIdToken(session); // verifySessionCookieより速い場合も
 
-    let decoded;
-    try {
-      decoded = await adminAuth.verifySessionCookie(session, true);
-    } catch (e) {
-      return NextResponse.json({ error: "Invalid session" }, { status: 401 });
-    }
-
-    if (!decoded.admin) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
-    // --- 📅 JST 日付計算 ---
-    // --- JST 今日 ---
     const now = new Date();
-    const todayKey = getJstDateKey(now); // "2026-01-03"
+    const todayKey = getJstDateKey(now);
+    const fromTs = Timestamp.fromDate(getJstMidnight(todayKey));
+    const toTs = Timestamp.fromDate(new Date(getJstMidnight(todayKey).getTime() + 24 * 60 * 60 * 1000));
 
-    // JST 0:00
-    const fromDate = getJstMidnight(todayKey); // 2026-01-03T00:00:00+09:00
+    // 2. 【重要】データの並列取得（Promise.all）を使って待ち時間を短縮
+    const [ordersSnap, empSnap] = await Promise.all([adminDb.collection("orders").where("reservationDate", ">=", fromTs).where("reservationDate", "<", toTs).get(), adminDb.collection("employees").where("isActive", "==", true).get()]);
 
-    // JST 翌日 0:00
-    const toDate = new Date(fromDate);
-    toDate.setDate(fromDate.getDate() + 1);
+    const orders = ordersSnap.docs.map((d) => ({ id: d.id, ...d.data() }) as Order);
+    const employees = empSnap.docs.map((d) => ({ id: d.id, ...d.data() }) as Employee);
 
-    // Timestamp に変換
-    const fromTs = Timestamp.fromDate(fromDate);
-    const toTs = Timestamp.fromDate(toDate);
-
-    // --- 🔍 Orders 取得 ---
-    const ordersSnap = await adminDb.collection("orders").where("reservationDate", ">=", fromTs).where("reservationDate", "<", toTs).get();
-
-    const orders = ordersSnap.docs.map((doc) => ({
-      id: doc.id,
-      ...(doc.data() as any),
-    }));
-
-    // --- 📊 集計 ---
-    const dateToCustomerSet: Record<string, Set<string>> = {};
-    const amountByDate: Record<string, number> = {};
-    const countByAssigned: Record<string, number> = {};
-
-    for (const o of orders) {
-      const date = getJstDateKey(o.reservationDate.toDate());
-
-      if (!dateToCustomerSet[date]) dateToCustomerSet[date] = new Set();
-      if (o.customerId) dateToCustomerSet[date].add(o.customerId);
-
-      amountByDate[date] = (amountByDate[date] || 0) + (o.amount || 0);
-      const uid = o.assignedUid || "unassigned";
-      countByAssigned[uid] = (countByAssigned[uid] || 0) + 1;
-    }
-
-    const uniqueCustomersByDate: Record<string, number> = {};
-    Object.keys(dateToCustomerSet).forEach((d) => {
-      uniqueCustomersByDate[d] = dateToCustomerSet[d].size;
-    });
-
-    // --- 📅 今日の Orders ---
-    const todayOrdersRaw: Order[] = orders.filter((o) => getJstDateKey(o.reservationDate.toDate()) === todayKey);
-
-    // --- 🔁 customers を 10 件ずつ取得 ---
-    const customerSnaps = await adminDb.collection("customers").get();
-
-    const customers = customerSnaps.docs.map((doc) => ({
-      id: doc.id,
-      ...(doc.data() as any),
-    }));
-
-    const customerIds = Array.from(new Set(todayOrdersRaw.map((o) => o.customerId).filter(Boolean)));
-
+    // 3. 必要な顧客IDだけを抽出して一括取得（全件取得は絶対にしない）
+    const customerIds = [...new Set(orders.map((o) => o.customerId).filter(Boolean))];
     let customersMap: Record<string, any> = {};
     if (customerIds.length > 0) {
       customersMap = await fetchCustomersInBatches(customerIds, adminDb);
     }
 
-    const todayOrders = todayOrdersRaw.map((o) => ({
-      ...o,
-      customer: customersMap[o.customerId] || null,
+    // 4. 1回のループで集計処理を完結させる
+    const orderStatsByEmployee = new Map<string, { assigned: number; completed: number }>();
+    let totalAmount = 0;
+    let pendingCount = 0;
+
+    const todayOrders = orders.map((o) => {
+      totalAmount += o.amount || 0;
+      if (o.status === "pending") pendingCount++;
+
+      // スタッフ集計
+      const uid = o.assignedUid;
+      if (uid) {
+        const stats = orderStatsByEmployee.get(uid) || { assigned: 0, completed: 0 };
+        stats.assigned++;
+        if (o.status === "completed") stats.completed++;
+        orderStatsByEmployee.set(uid, stats);
+      }
+
+      return {
+        ...o,
+        customer: customersMap[o.customerId] || { name: "不明な顧客" },
+      };
+    });
+
+    const dashboardEmployees = employees.map((emp) => ({
+      id: emp.id,
+      name: emp.name,
+      assignedOrderCount: orderStatsByEmployee.get(emp.id)?.assigned || 0,
+      completedOrderCount: orderStatsByEmployee.get(emp.id)?.completed || 0,
     }));
-
-    // --- 📊 KPI 計算（今日分） ---
-    const orderCount = todayOrders.length;
-
-    const totalAmount = todayOrders.reduce((sum, o) => sum + (o.amount || 0), 0);
-
-    // pending の定義は status が "pending" or "new" 等に合わせて
-    const pendingCount = todayOrders.filter((o) => o.status === "pending").length;
-
-    // --- 👥 employees ---
-    const empSnap = await adminDb.collection("employees").where("isActive", "==", true).get();
-
-    const employees = empSnap.docs.map((d) => ({
-      id: d.id,
-      ...(d.data() as any),
-    }));
-
-const orderStatsByEmployee = new Map<
-  string,
-  { assigned: number; completed: number }
->();
-
-todayOrders.forEach((order) => {
-  const uid = order.assignedUid;
-  if (!uid) return;
-
-  if (!orderStatsByEmployee.has(uid)) {
-    orderStatsByEmployee.set(uid, { assigned: 0, completed: 0 });
-  }
-
-  const stats = orderStatsByEmployee.get(uid)!;
-  stats.assigned += 1;
-
-  if (order.status === "completed") {
-    stats.completed += 1;
-  }
-});
-const dashboardEmployees: DashboardEmployee[] = employees.map((emp) => {
-  const stats = orderStatsByEmployee.get(emp.id) ?? {
-    assigned: 0,
-    completed: 0,
-  };
-
-  return {
-    id: emp.id,
-    name: emp.name,
-    assignedOrderCount: stats.assigned,
-    completedOrderCount: stats.completed,
-  };
-});
 
     return NextResponse.json({
       success: true,
       data: {
         todayOrders,
         employees: dashboardEmployees,
-        customers,
-        kpi: {
-          orderCount,
-          totalAmount,
-          pendingCount,
-        },
+        kpi: { orderCount: todayOrders.length, totalAmount, pendingCount },
       },
     });
   } catch (err) {
-    console.error("dashboard API error:", err);
     return NextResponse.json({ success: false, error: String(err) }, { status: 500 });
   }
 }

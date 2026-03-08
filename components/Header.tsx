@@ -1,9 +1,10 @@
 "use client";
+
 import { useEffect, useState } from "react";
 import Image from "next/image"; // Imageコンポーネントを追加
 import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
-import { usePathname, useRouter } from "next/navigation"; // useRouterを追加
+import { usePathname, useRouter } from "next/navigation";
 import { HomeIcon, ClipboardDocumentListIcon, UsersIcon } from "@heroicons/react/24/outline";
 import { useAuth } from "@/app/providers/AuthProvider";
 import { ShieldCheck, UserIcon } from "lucide-react";
@@ -26,15 +27,14 @@ export default function Header() {
   const isAdmin = user?.role === "admin";
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
-  const router = useRouter(); // 遷移用
-
-  if (loading) return null;
+  const router = useRouter();
 
   const onSignOut = () => {
+    setMenuOpen(false);
     signOut(auth);
     router.push("/signin");
   };
-
+  
   return (
     <header className="w-full flex items-center justify-between px-10 py-4 bg-white border-b border-gray-100 sticky top-0 z-50">
       <div className="flex items-center gap-6">
@@ -44,24 +44,19 @@ export default function Header() {
             <div className="relative w-20 h-17    group-hover:scale-105">
               <Image src="/spirit.webp" alt="Spirit Logo" fill className="object-cover p-0.5" />
             </div>
-            <div className="flex items-center gap-3 py-4">
-              {/* アイコン部分 */}
-              <div className={`p-1 rounded-2xl shadow-sm ${isAdmin ? "bg-blue-50 text-blue-600 border border-blue-100" : "bg-slate-50 text-slate-600 border border-slate-100"}`}>{isAdmin ? <ShieldCheck size={32} strokeWidth={2.5} /> : <UserIcon size={32} strokeWidth={2.5} />}</div>
-              {/* テキスト部分 */}
-              <div>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-0.5">{isAdmin ? "Administrator" : "Staff Member"}</p>
-                <h1 className="text-xl font-extrabold text-gray-900 tracking-tight leading-none">
-                  <span className="text-blue-500">{user?.name}</span>
-                </h1>
+            {user?.uid && (
+              <div className="flex items-center gap-3 py-4">
+                {/* アイコン部分 */}
+                <div className={`p-1 rounded-2xl shadow-sm ${isAdmin ? "bg-blue-50 text-blue-600 border border-blue-100" : "bg-slate-50 text-slate-600 border border-slate-100"}`}>{isAdmin ? <ShieldCheck size={32} strokeWidth={2.5} /> : <UserIcon size={32} strokeWidth={2.5} />}</div>
+                {/* テキスト部分 */}
+                <div>
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-0.5">{isAdmin ? "Administrator" : "Staff Member"}</p>
+                  <h1 className="text-xl font-extrabold text-gray-900 tracking-tight leading-none">
+                    <span className="text-blue-500">{user?.name}</span>
+                  </h1>
+                </div>
               </div>
-            </div>
-            {/* テキスト部分：Gemini風スタイリング */}
-            {/* <div className="font-outfit text-2xl font-semibold tracking-[-0.02em] flex items-baseline">
-              <span className="text-slate-800">Spi</span>
-              <span className="text-slate-800">rit</span>
-              {/* 最後にGemini風のキラキラ（ドット）を添えるとさらにおしゃれ
-              <span className="ml-0.5 w-1.5 h-1.5 rounded-full bg-gradient-to-tr from-cyan-400 to-blue-500"></span>
-            </div> */}
+            )}
           </div>
         </div>
       </div>

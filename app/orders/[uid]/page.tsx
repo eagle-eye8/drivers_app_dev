@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import ProgressCircle from "@/components/ui/ProgressCircle";
 import { LoadingOverlay } from "@/components/ui/LoadingOverlay";
 import { OrderWithCustomer } from "@/types/orderWithCustomer";
-import { Navigation, Phone, MapPin, TrendingUp, Route, Loader2, PlusIcon, Check, Copy, LogOut, Fuel, Package, CheckCircle2, PackageCheck, Star } from "lucide-react";
+import { Navigation, Phone, MapPin, TrendingUp, Route, Loader2, PlusIcon, Check, Copy, LogOut, Package, PackageCheck, Star, Truck } from "lucide-react";
 import { useState } from "react";
 import { PickupModal } from "@/components/pickups/PickupModal";
 import { getJstDateString } from "@/lib/utils/date";
@@ -152,7 +152,10 @@ export default function IndividualOrdersPage() {
       {/* 注文リスト */}
       <div className="max-w-md mx-auto p-4 mt-4 space-y-4">
         {orders.length === 0 ? (
-          <div className="text-center py-20 text-gray-400 font-medium italic">No missions scheduled today.</div>
+          <div className="flex justify-center items-center gap-2 py-20 text-gray-400 font-medium">
+            集荷の注文が入ってません
+            <Truck />
+          </div>
         ) : (
           [...orders]
             .sort((a, b) => (a.status === "completed" ? 1 : -1))

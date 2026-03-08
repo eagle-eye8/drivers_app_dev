@@ -13,28 +13,32 @@ export default function SignUp() {
   // ---------------------
   // Email & Password SignUp
   // ---------------------
-  const handleEmailSignIn = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
+const handleEmailSignIn = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setLoading(true);
 
-    try {
-      // ① Firebase Auth でユーザー作成
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
+  try {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
 
-      // ② バックエンド API にユーザー情報を送信
-      const res = await fetch("/api/createUser", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ uid: user.uid, email: user.email }),
-      });
+    const res = await fetch("/api/createUser", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ uid: user.uid, email: user.email }),
+    });
 
-      if (!res.ok) throw new Error("Failed to save user in Firestore");
-    } catch (err: any) {
-      setLoading(false);
-    }
-  };
+    if (!res.ok) throw new Error("Failed to save user");
 
+    // ★成功したら適切な場所へリダイレクト
+    // window.location.href を使うと AuthProvider の状態がリセットされて確実です
+    window.location.href = "/admin/dashboard"; 
+
+  } catch (err: any) {
+    console.error(err);
+    alert(err.message); // エラー内容を表示して確認
+    setLoading(false);
+  }
+};
   // ---------------------
   // Google SignUp (正しく修正)
   // ---------------------
@@ -66,7 +70,7 @@ export default function SignUp() {
         {/* Gemini風おしゃれロゴエリア */}
         <div className="flex flex-col items-center mb-10">
           <div className="relative w-14 h-14 mb-4 rounded-2xl overflow-hidden shadow-md border border-slate-100 transition-transform hover:scale-105 duration-300">
-            <Image src="/logo-header.webp" alt="Spirit Logo" fill className="object-cover" />
+            <Image src="/spirit.webp" alt="Spirit Logo" fill className="object-cover" />
           </div>
           <div className="flex items-center">
             <span className="text-3xl font-bold tracking-tighter text-slate-800">Spirit</span>

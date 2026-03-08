@@ -1,20 +1,10 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Outfit } from "next/font/google";
+import { Outfit } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header";
 import { ToastProvider } from "@/components/toast/ToastProvider";
 import { SnackbarProvider } from "@/components/ui/SnackbarProvider";
 import { AuthProvider } from "./providers/AuthProvider";
-
-// const geistSans = Geist({
-//   variable: "--font-geist-sans",
-//   subsets: ["latin"],
-// });
-
-// const geistMono = Geist_Mono({
-//   variable: "--font-geist-mono",
-//   subsets: ["latin"],
-// });
 
 export const metadata: Metadata = {
   title: "My Logistics App",
@@ -24,10 +14,9 @@ export const metadata: Metadata = {
     apple: "/apple-touch-icon.png",
   },
   manifest: "/site.webmanifest",
-  themeColor: "#22d3ee", // ここが重要！
 };
 
-const outfit = Outfit({ 
+const outfit = Outfit({
   subsets: ["latin"],
   weight: ["600", "800"], // ロゴに使う太さを指定
   variable: "--font-outfit",

@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebaseAdmin";
 import { OrderWithCustomer } from "@/types/orderWithCustomer";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
-import { jstMidnightFromDateString } from "@/lib/date";
+import { getJstMidnight } from "@/lib/date";
 
 // Google Routes APIを呼び出す補助関数
 async function getOptimizedOrder(orders: OrderWithCustomer[]) {
@@ -174,7 +174,7 @@ export async function POST(req: Request) {
 
     const routeGroupId = `${customerId}-${reservationDate}`;
 
-    const reservationTs = Timestamp.fromDate(jstMidnightFromDateString(reservationDate));
+    const reservationTs = Timestamp.fromDate(getJstMidnight(reservationDate));
     const order = {
       customerId,
       assignedUid: assignedUid || null,

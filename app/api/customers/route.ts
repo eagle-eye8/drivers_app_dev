@@ -21,7 +21,7 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { name, email, phone, address } = body;
+    const { name, kana, email, phone, address } = body;
 
     if (!name || !address) {
       return NextResponse.json({ error: "name and address required" }, { status: 400 });
@@ -39,6 +39,7 @@ export async function POST(req: Request) {
 
     await adminDb.collection("customers").add({
       name,
+      kana,
       email: email || null,
       phone: phone || null,
       address,
