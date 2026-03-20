@@ -1,5 +1,5 @@
 export type SigninUser = {
-  uid: string;
+  id: string;
   email: string | null;
   name: string;
   role: "admin" | "driver";

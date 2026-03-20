@@ -16,5 +16,5 @@ export default async function Home() {
     redirect("/admin/dashboard");
   }
 
-  redirect(`/orders/${user.uid}`);
+  redirect(`/orders/${user.id}`);
 }

@@ -44,7 +44,7 @@ export default function Header() {
             <div className="relative w-20 h-17    group-hover:scale-105">
               <Image src="/spirit.webp" alt="Spirit Logo" fill className="object-cover p-0.5" />
             </div>
-            {user?.uid && (
+            {user?.id && (
               <div className="flex items-center gap-3 py-4">
                 {/* アイコン部分 */}
                 <div className={`p-1 rounded-2xl shadow-sm ${isAdmin ? "bg-blue-50 text-blue-600 border border-blue-100" : "bg-slate-50 text-slate-600 border border-slate-100"}`}>{isAdmin ? <ShieldCheck size={32} strokeWidth={2.5} /> : <UserIcon size={32} strokeWidth={2.5} />}</div>

@@ -3,14 +3,14 @@ import { adminDb } from "@/lib/firebaseAdmin";
 
 export async function POST(req: Request) {
   try {
-    const { uid, email } = await req.json();
+    const { id, email } = await req.json();
 
-    if (!uid || !email) {
-      return NextResponse.json({ error: "uid and email are required" }, { status: 400 });
+    if (!id || !email) {
+      return NextResponse.json({ error: "id and email are required" }, { status: 400 });
     }
 
-    // Firestore users/{uid} に登録
-    await adminDb.collection("users").doc(uid).set(
+    // Firestore users/{id} に登録
+    await adminDb.collection("users").doc(id).set(
       {
         email,
         createdAt: new Date(),

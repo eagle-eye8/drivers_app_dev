@@ -59,7 +59,7 @@ function SignInInner() {
     if (user.role === "admin") {
       router.replace("/admin/dashboard");
     } else {
-      router.replace(`/orders/${user.uid}`);
+      router.replace(`/orders/${user.id}`);
     }
   }, [user, loading, router, callbackUrl]);
 

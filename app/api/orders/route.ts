@@ -59,7 +59,7 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const date = searchParams.get("date"); // YYYY-MM-DD (JST)
     const status = searchParams.get("status");
-    const uid = searchParams.get("uid"); // ★ 従業員IDを取得
+    const id = searchParams.get("id"); // ★ 従業員IDを取得
 
     let query: FirebaseFirestore.Query = adminDb.collection("orders");
 
@@ -77,8 +77,8 @@ export async function GET(req: Request) {
     }
 
     // ★ 従業員IDでの絞り込みを追加
-    if (uid) {
-      query = query.where("assignedUid", "==", uid);
+    if (id) {
+      query = query.where("assignedUid", "==", id);
     }
 
     // インデックス設定に合わせてソート（reservationDateとassignedUidを混ぜる場合は複合インデックスが必要になる場合があります）
@@ -153,9 +153,9 @@ export async function GET(req: Request) {
     });
 
     // ★ ここでルート最適化を実行！
-    // 従業員ID(uid)が指定されている（＝特定の人のルートを表示している）時だけ最適化する
+    // 従業員ID(id)が指定されている（＝特定の人のルートを表示している）時だけ最適化する
     let finalData = orders;
-    if (uid && orders.length > 0) {
+    if (id && orders.length > 0) {
       finalData = await getOptimizedOrder(orders);
     }
 

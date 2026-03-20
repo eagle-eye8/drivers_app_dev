@@ -64,12 +64,12 @@ export async function GET() {
       if (o.status === "pending") pendingCount++;
 
       // スタッフ集計
-      const uid = o.assignedUid;
-      if (uid) {
-        const stats = orderStatsByEmployee.get(uid) || { assigned: 0, completed: 0 };
+      const id = o.assignedUid;
+      if (id) {
+        const stats = orderStatsByEmployee.get(id) || { assigned: 0, completed: 0 };
         stats.assigned++;
         if (o.status === "completed") stats.completed++;
-        orderStatsByEmployee.set(uid, stats);
+        orderStatsByEmployee.set(id, stats);
       }
 
       return {

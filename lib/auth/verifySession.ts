@@ -17,7 +17,7 @@ export async function verifySession(session: string) {
   // admin = userSnap.exists && userSnap.data()?.role === "admin";
 
   return {
-    uid: decoded.uid,
+    id: decoded.uid,
     email: decoded.email,
     admin,
   };

@@ -10,7 +10,6 @@ import { DraggableOrder } from "@/components/dnd/DraggableOrder";
 import { UnassignedDrop } from "@/components/dnd/UnassignedDrop";
 import { Employee } from "@/types/employee";
 
-
 export default function AssignBoardPage() {
   const fetcher = (url: string) => fetch(url).then((r) => r.json());
   /* ================= Data ================= */
@@ -21,7 +20,7 @@ export default function AssignBoardPage() {
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: { distance: 5 },
-    })
+    }),
   );
 
   const [orders, setOrders] = useState<OrderWithCustomer[]>([]);
@@ -76,7 +75,7 @@ export default function AssignBoardPage() {
     }
   };
 
-  const ordersByEmployee = (uid: string) => orders.filter((o) => o.assignedUid === uid);
+  const ordersByEmployee = (id: string) => orders.filter((o) => o.assignedUid === id);
   return (
     <div className="max-w-[1400px] mx-auto px-4 md:px-8 py-8 space-y-12">
       {/* ================= Header ================= */}

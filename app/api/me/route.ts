@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       user: {
-        uid: decoded.uid,
+        id: decoded.uid,
         email: decoded.email ?? "",
         name: data.name ?? "",
         role: data.role ?? "driver",

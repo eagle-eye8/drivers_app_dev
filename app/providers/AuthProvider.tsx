@@ -31,9 +31,9 @@ const userCache = new Map<string, SigninUser>();
  * まだ内部反映していないため "client is offline" エラーが起きる。
  * APIルートはadminDbを使うためクライアントの認証状態に依存しない。
  */
-async function fetchUserFromApi(token: string, uid: string, forceRefresh = false): Promise<SigninUser> {
-  if (!forceRefresh && userCache.has(uid)) {
-    return userCache.get(uid)!;
+async function fetchUserFromApi(token: string, id: string, forceRefresh = false): Promise<SigninUser> {
+  if (!forceRefresh && userCache.has(id)) {
+    return userCache.get(id)!;
   }
 
   const res = await fetch("/api/me", {
@@ -47,7 +47,7 @@ async function fetchUserFromApi(token: string, uid: string, forceRefresh = false
 
   const data = await res.json();
   const appUser: SigninUser = data.user;
-  userCache.set(uid, appUser);
+  userCache.set(id, appUser);
   return appUser;
 }
 

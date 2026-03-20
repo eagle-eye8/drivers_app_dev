@@ -13,7 +13,7 @@ export async function GET() {
     const decoded = await adminAuth.verifySessionCookie(session, true);
     return NextResponse.json({
       admin: decoded.admin === true,
-      uid: decoded.uid,
+      id: decoded.uid,
       name: decoded.name || decoded.email,
     });
   } catch (err) {
