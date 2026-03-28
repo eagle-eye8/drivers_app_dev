@@ -1,25 +1,26 @@
 "use client";
 
-import useSWR from "swr";
 import { Employee } from "@/types/employee";
+import { AssignedEmployee } from "@/types/orderWithCustomer";
 import { useState } from "react";
+import useSWR from "swr";
 import { LoadingOverlay } from "../ui/LoadingOverlay";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 type Props = {
   orderId: string;
-  currentUid?: string | null;
+  assignedEmployee?: AssignedEmployee | null;
   onClose: () => void;
   onAssigned: () => void; // ← mutate 用
 };
 
-export function AssignStaffModal({ orderId, currentUid, onClose, onAssigned }: Props) {
+export function AssignStaffModal({ orderId, assignedEmployee, onClose, onAssigned }: Props) {
   const { data } = useSWR("/api/employees", fetcher);
   const employees: Employee[] = data?.data ?? [];
 
   const [loading, setLoading] = useState(false);
-  const [selectedUid, setSelectedUid] = useState(currentUid ?? "");
+  const [selectedEmployee, setSelectedEmployee] = useState(assignedEmployee ?? "");
 
   async function handleAssign() {
     setLoading(true);
@@ -27,7 +28,7 @@ export function AssignStaffModal({ orderId, currentUid, onClose, onAssigned }: P
       const res = await fetch(`/api/orders/${orderId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ assignedUid: selectedUid || null }),
+        body: JSON.stringify({ assignedEmployee: selectedEmployee || null }),
       });
       showSnackbar("担当者を変更しました", "success");
     } catch {
@@ -43,7 +44,14 @@ export function AssignStaffModal({ orderId, currentUid, onClose, onAssigned }: P
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
       <div className="bg-white rounded-xl w-full max-w-sm p-6 space-y-4">
         <h3 className="text-lg font-semibold">担当者を割り当て</h3>
-        <select value={selectedUid ?? ""} onChange={(e) => setSelectedUid(e.target.value)} className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <select
+          value={assignedEmployee?.id ?? ""}
+          onChange={(e) => {
+            const selected = employees.find((emp) => emp.id === e.target.value);
+            setSelectedEmployee(selected ? { id: selected.id, name: selected.name } : { id: "", name: "" });
+          }}
+          className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
           <option value="">未割り当て</option>
           {employees.map((e) => (
             <option key={e.id} value={e.id}>

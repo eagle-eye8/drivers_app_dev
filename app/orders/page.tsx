@@ -75,7 +75,7 @@ export default function OrdersPage() {
                   </td>
 
                   <td className="px-4 py-2 text-center">
-                    {order.assignedUid ?? "未割り当て"}
+                    {order.assignedEmployee?.id ?? "未割り当て"}
                   </td>
 
                   <td className="px-4 py-2 text-gray-500">

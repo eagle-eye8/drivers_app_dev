@@ -93,7 +93,7 @@ export function AdminOrderTable({ orders, onAssigned, onPickupCompleted }: Props
       {targetAssignOrder && (
         <AssignStaffModal
           orderId={targetAssignOrder.id}
-          currentUid={targetAssignOrder.assignedUid}
+          assignedEmployee={targetAssignOrder.assignedEmployee}
           onClose={() => setTargetAssignOrder(null)}
           onAssigned={() => {
             setTargetAssignOrder(null);

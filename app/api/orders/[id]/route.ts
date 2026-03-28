@@ -49,8 +49,6 @@ export async function GET(req: Request) {
 
       const customer = data.customerId ? customersMap.get(data.customerId) : null;
 
-      const employee = data.assignedUid ? employeesMap.get(data.assignedUid) : null;
-
       return {
         id: doc.id,
         ...data,
@@ -79,9 +77,9 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     const body = await req.json();
 
     // 🔹 担当者更新
-    if ("assignedUid" in body) {
+    if ("assignedEmployee" in body) {
       await adminDb.collection("orders").doc(id).update({
-        assignedUid: body.assignedUid,
+        assignedEmployee: body.assignedEmployee,
         updatedAt: FieldValue.serverTimestamp(),
       });
 
