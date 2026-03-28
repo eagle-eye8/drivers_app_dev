@@ -31,7 +31,7 @@ export default function CreateOrderModal({ isOpen, onClose, employees }: Props) 
   const [form, setForm] = useState({
     customerId: "",
     reservationDate: today,
-    assignedUid: "",
+    assignedEmployee: { id: "", name: "" },
   });
 
   // ─── 電話番号入力 → debounce → API検索 ──────────────────────────────────
@@ -167,7 +167,17 @@ export default function CreateOrderModal({ isOpen, onClose, employees }: Props) 
               <Users className="w-4 h-4 text-cyan-400" />
               担当者（任意）
             </label>
-            <select value={form.assignedUid} onChange={(e) => setForm({ ...form, assignedUid: e.target.value })} className="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-cyan-500">
+            <select
+              value={form.assignedEmployee.id}
+              onChange={(e) => {
+                const selected = employees.find((emp) => emp.id === e.target.value);
+                setForm({
+                  ...form,
+                  assignedEmployee: selected ? { id: selected.id, name: selected.name } : { id: "", name: "" },
+                });
+              }}
+              className="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-cyan-500"
+            >
               <option value="">未指定</option>
               {employees.map((e) => (
                 <option key={e.id} value={e.id}>
