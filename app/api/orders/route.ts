@@ -1,4 +1,3 @@
-// app/api/orders/route.ts
 import { NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebaseAdmin";
 import { OrderWithCustomer } from "@/types/orderWithCustomer";
@@ -78,10 +77,9 @@ export async function GET(req: Request) {
 
     // ★ 従業員IDでの絞り込みを追加
     if (id) {
-      query = query.where("assignedUid", "==", id);
+      query = query.where("assignedEmployee.id", "==", id);
     }
 
-    // インデックス設定に合わせてソート（reservationDateとassignedUidを混ぜる場合は複合インデックスが必要になる場合があります）
     const snap = await query.orderBy("reservationDate", "asc").get();
 
     /* ======================
@@ -100,7 +98,7 @@ export async function GET(req: Request) {
     /* ======================
        employees join (バッチ取得)
     ====================== */
-    const employeeIds = Array.from(new Set(snap.docs.map((d) => d.data().assignedUid).filter(Boolean)));
+    const employeeIds = Array.from(new Set(snap.docs.map((d) => d.data().assignedEmployee.id).filter(Boolean)));
     const employeesMap = new Map<string, any>();
 
     if (employeeIds.length > 0) {
@@ -116,19 +114,17 @@ export async function GET(req: Request) {
     const orders: OrderWithCustomer[] = snap.docs.map((doc) => {
       const data = doc.data();
       const customer = data.customerId ? customersMap.get(data.customerId) : null;
-      const employee = data.assignedUid ? employeesMap.get(data.assignedUid) : null;
 
       return {
         id: doc.id,
         customerId: data.customerId,
+        assignedEmployee: data.assignedEmployee,
         reservationDate: data.reservationDate,
-        routeGroupId: data.routeGroupId,
         status: data.status,
         amount: data.amount ?? 0,
         postOfficeFee: data.postOfficeFee,
         paymentStatus: data.paymentStatus,
         notes: data.notes,
-        pickupWindow: data.pickupWindow,
         items: data.items || [],
         isMerged: data.isMerged,
         deliveryOrder: data.deliveryOrder ?? 0,
@@ -145,10 +141,6 @@ export async function GET(req: Request) {
               updatedAt: customer.updatedAt?.toMillis?.() ?? 0,
             }
           : null,
-        assignedEmployee: {
-          id: data.assignedUid ?? null,
-          name: employee?.name ?? null,
-        },
       };
     });
 
@@ -170,17 +162,14 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    const { customerId, assignedUid, reservationDate, kind, quantity } = body;
-
-    const routeGroupId = `${customerId}-${reservationDate}`;
+    const { customerId, reservationDate, assignedEmployee } = body;
 
     const reservationTs = Timestamp.fromDate(getJstMidnight(reservationDate));
     const order = {
       customerId,
-      assignedUid: assignedUid || null,
+      assignedEmployee,
       reservationDate: reservationTs,
-      routeGroupId,
-      status: assignedUid ? "assigned" : "pending",
+      status: assignedEmployee.id ? "assigned" : "pending",
       amount: 0,
       paymentStatus: "unpaid",
       isMerged: false,

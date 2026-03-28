@@ -18,7 +18,7 @@ export async function GET(req: Request) {
     const ordersSnap = await query.orderBy("createdAt", "desc").get();
 
     /* ===== 担当者IDs ===== */
-    const employeeIds = Array.from(new Set(ordersSnap.docs.map((d) => d.data().assignedUid).filter(Boolean)));
+    const employeeIds = Array.from(new Set(ordersSnap.docs.map((d) => d.data().assignedEmployee?.id).filter(Boolean)));
 
     const employeesMap = new Map<string, any>();
 
@@ -62,12 +62,7 @@ export async function GET(req: Request) {
               location: customer.location,
             }
           : null,
-        assignedEmployee: employee
-          ? {
-              id: data.assignedUid,
-              name: employee.name,
-            }
-          : null,
+        assignedEmployee: data.assignedEmployee,
       };
     });
 
@@ -120,7 +115,6 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       return NextResponse.json({ success: true });
     }
   } catch (err) {
-    console.error("PATCH /api/orders/[id] error:", err);
     return NextResponse.json({ success: false }, { status: 500 });
   }
 }

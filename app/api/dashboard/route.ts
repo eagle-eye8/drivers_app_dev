@@ -3,7 +3,6 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { adminAuth, adminDb } from "@/lib/firebaseAdmin";
 import { FieldPath, Timestamp } from "firebase-admin/firestore";
-import { DashboardEmployee } from "@/types/orderWithCustomer";
 import { Order } from "@/types/order";
 import { getJstDateKey, getJstMidnight } from "@/lib/date";
 import { Employee } from "@/types/employee";
@@ -64,7 +63,7 @@ export async function GET() {
       if (o.status === "pending") pendingCount++;
 
       // スタッフ集計
-      const id = o.assignedUid;
+      const id = o.assignedEmployee?.id;
       if (id) {
         const stats = orderStatsByEmployee.get(id) || { assigned: 0, completed: 0 };
         stats.assigned++;

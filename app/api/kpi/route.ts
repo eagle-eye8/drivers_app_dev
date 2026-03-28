@@ -20,7 +20,7 @@ export async function GET(req: Request) {
       const o = doc.data();
 
       totalAmount += o.amount || 0;
-      if (!o.assignedUid) unassigned += 1;
+      if (!o.assignedEmployee?.id) unassigned += 1;
       if (o.customerId) customerSet.add(o.customerId);
     });
 
