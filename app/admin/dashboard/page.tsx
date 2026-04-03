@@ -1,17 +1,17 @@
 "use client";
 
 import useSWR from "swr";
-import Link from "next/link";
-import { useState, useMemo } from "react";
-import { DashboardEmployee, OrderWithCustomer } from "@/types/orderWithCustomer";
-import { PlusIcon, UserIcon, FileUser, ListPlus } from "lucide-react";
-import CreateOrderModal from "@/components/orders/CreateOrderModal";
 import { useAuth } from "@/app/providers/AuthProvider";
+import CreateCustomerModal from "@/components/customers/CreateCustomerModal";
+import CreateOrderModal from "@/components/orders/CreateOrderModal";
+import DailySummaryAdminModal from "@/components/ui/DailySummaryAdminModal";
 import ProgressCircle from "@/components/ui/ProgressCircle";
 import { getJstDateString } from "@/lib/utils/date";
-import CreateCustomerModal from "@/components/customers/CreateCustomerModal";
-import DailySummaryModal from "@/components/ui/DailySummaryModal";
+import { DashboardEmployee, OrderWithCustomer } from "@/types/orderWithCustomer";
+import { FileUser, ListPlus, PlusIcon, UserIcon } from "lucide-react";
+import Link from "next/link";
 import { LoadingOverlay } from "@/components/ui/LoadingOverlay";
+import { useMemo, useState } from "react";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -24,17 +24,14 @@ export default function AdminDashboard() {
   const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
   const [isSummaryOpen, setIsSummaryOpen] = useState(false);
   const isAdmin = user?.role === "admin";
-  const shouldFetch = isAdmin;
 
-  const { data, isLoading, error } = useSWR(shouldFetch ? `/api/dashboard?date=${today}` : null, fetcher, {
+  const { data, isLoading, error } = useSWR(isAdmin ? `/api/dashboard?date=${today}` : null, fetcher, {
     revalidateOnFocus: false,
     dedupingInterval: 60000,
     fallbackData: { success: false, data: { todayOrders: [], employees: [], kpi: { orderCount: 0, pendingCount: 0, totalAmount: 0 } } },
   });
 
-
   const { todayOrders = [], employees = [], kpi = { orderCount: 0, pendingCount: 0, totalAmount: 0 } } = data.data;
-
   const progressStats = useMemo(() => {
     const completed = todayOrders.filter((o: OrderWithCustomer) => o.status === "completed").length;
     const total = todayOrders.length;
@@ -131,7 +128,7 @@ export default function AdminDashboard() {
 
       {isOrderModalOpen && <CreateOrderModal isOpen={isOrderModalOpen} onClose={() => setIsOrderModalOpen(false)} employees={employees} />}
       {isCustomerModalOpen && <CreateCustomerModal isOpen={isCustomerModalOpen} onClose={() => setIsCustomerModalOpen(false)} />}
-      {isSummaryOpen && <DailySummaryModal onClose={() => setIsSummaryOpen(false)} isAdmin={isAdmin} uid={user?.uid} orders={todayOrders} />}
+      {isSummaryOpen && <DailySummaryAdminModal onClose={() => setIsSummaryOpen(false)} orders={todayOrders} />}
     </div>
   );
 }

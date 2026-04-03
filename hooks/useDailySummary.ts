@@ -29,11 +29,6 @@ export interface CurrentSummary extends UserSummary {
   netProfit: number;
 }
 
-// =====================================================
-// useUserSummaries
-// orders を assignedEmployee.id でグルーピングして集計する
-// =====================================================
-
 export function useUserSummaries(orders: OrderWithCustomer[]): UserSummary[] {
   return useMemo(() => {
     const grouped = new Map<string, UserSummary>();
@@ -42,7 +37,6 @@ export function useUserSummaries(orders: OrderWithCustomer[]): UserSummary[] {
       .filter((o) => o.status === "completed")
       .forEach((order) => {
         const uid = order?.assignedEmployee?.id || undefined;
-        console.log("uid:", uid);
         if (!uid) return;
 
         const totalItems = order.items?.reduce((sum, i) => sum + (Number(i.quantity) || 0), 0) ?? 0;
@@ -160,6 +154,7 @@ export function useAllUsersSummary(orders: OrderWithCustomer[]): {
   summaries: AdminUserSummary[];
   isLoading: boolean;
   totalSales: number;
+  totalPostOfficeFee: number;
   totalExpenses: number;
   totalNetProfit: number;
 } {
@@ -216,8 +211,9 @@ export function useAllUsersSummary(orders: OrderWithCustomer[]): {
   }, [userSummaries, expenseMap]);
 
   const totalSales = useMemo(() => summaries.reduce((sum, u) => sum + u.totalSales, 0), [summaries]);
+  const totalPostOfficeFee = useMemo(() => summaries.reduce((sum, u) => sum + u.totalPostOfficeFee, 0), [summaries]);
   const totalExpenses = useMemo(() => summaries.reduce((sum, u) => sum + u.totalExpenses, 0), [summaries]);
   const totalNetProfit = totalSales - totalExpenses;
 
-  return { summaries, isLoading, totalSales, totalExpenses, totalNetProfit };
+  return { summaries, isLoading, totalSales, totalPostOfficeFee, totalExpenses, totalNetProfit };
 }
