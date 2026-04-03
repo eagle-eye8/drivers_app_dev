@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server";
+import { getJstMidnight } from "@/lib/date";
 import { adminDb } from "@/lib/firebaseAdmin";
 import { OrderWithCustomer } from "@/types/orderWithCustomer";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
-import { getJstMidnight } from "@/lib/date";
+import { NextResponse } from "next/server";
 
 // Google Routes APIを呼び出す補助関数
 async function getOptimizedOrder(orders: OrderWithCustomer[]) {
@@ -58,7 +58,7 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const date = searchParams.get("date"); // YYYY-MM-DD (JST)
     const status = searchParams.get("status");
-    const id = searchParams.get("id"); // ★ 従業員IDを取得
+    const id = searchParams.get("uid"); // ★ 従業員IDを取得
 
     let query: FirebaseFirestore.Query = adminDb.collection("orders");
 

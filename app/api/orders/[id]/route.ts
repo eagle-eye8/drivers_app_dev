@@ -9,11 +9,13 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const date = searchParams.get("date");
     const status = searchParams.get("status");
+    const uid = searchParams.get("uid");
 
     let query: FirebaseFirestore.Query = adminDb.collection("orders");
 
     if (date) query = query.where("reservationDate", "==", date);
     if (status) query = query.where("status", "==", status);
+    if (uid) query = query.where("assignedEmployee.id", "==", uid);
 
     const ordersSnap = await query.orderBy("createdAt", "desc").get();
 
