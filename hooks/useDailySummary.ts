@@ -40,7 +40,6 @@ export function useUserSummaries(orders: OrderWithCustomer[]): UserSummary[] {
         if (!uid) return;
 
         const totalItems = order.items?.reduce((sum, i) => sum + (Number(i.quantity) || 0), 0) ?? 0;
-        console.log("order?.assignedEmployee?.name:", order?.assignedEmployee?.name);
         const existing = grouped.get(uid);
         if (existing) {
           existing.totalSales += order.amount ?? 0;
@@ -160,7 +159,6 @@ export function useAllUsersSummary(orders: OrderWithCustomer[]): {
 } {
   const today = getJstDateString();
   const userSummaries = useUserSummaries(orders);
-  console.log("userSummaries:", userSummaries);
   const [expenseMap, setExpenseMap] = useState<Map<string, number>>(new Map());
   const [isLoading, setIsLoading] = useState(false);
 
