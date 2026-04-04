@@ -24,7 +24,7 @@ const handleEmailSignIn = async (e: React.FormEvent) => {
     const res = await fetch("/api/createUser", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ uid: user.uid, email: user.email }),
+      body: JSON.stringify({ id: user.uid, email: user.email }),
     });
 
     if (!res.ok) throw new Error("Failed to save user");
@@ -55,7 +55,7 @@ const handleEmailSignIn = async (e: React.FormEvent) => {
       const res = await fetch("/api/createUser", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ uid: user.uid, email: user.email }),
+        body: JSON.stringify({ id: user.uid, email: user.email }),
       });
 
       if (!res.ok) throw new Error("Failed to save user");

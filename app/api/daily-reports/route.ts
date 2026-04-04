@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
 
     // userId が指定されている場合は、そのユーザーのみに絞り込む
     if (userId) {
-      query = query.where("userId", "==", userId);
+      query = query.where("user.id", "==", userId);
     }
 
     const snapshot = await query.get();
@@ -41,20 +41,20 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { userId, date, expenses } = body;
+    const { user, date, expenses } = body;
 
-    if (!userId || !date) {
-      return NextResponse.json({ error: "必須項目（userId, date）が不足しています" }, { status: 400 });
+    if (!user.id || !date) {
+      return NextResponse.json({ error: "必須項目（user.id, date）が不足しています" }, { status: 400 });
     }
 
     // 経費の合計額を算出
     const totalExpense = expenses.reduce((sum: number, item: any) => sum + (Number(item.amount) || 0), 0);
 
     // ドキュメントIDを「日付_ユーザーID」で固定して一意にする
-    const reportId = `${date}_${userId}`;
+    const reportId = `${date}_${user.id}`;
     await adminDb.collection("dailyReports").doc(reportId).set(
       {
-        userId,
+        user,
         date,
         expenses,
         totalExpense,

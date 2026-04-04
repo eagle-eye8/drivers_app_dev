@@ -7,6 +7,7 @@ import Modal from "@/components/ui/Modal";
 import { useSnackbar } from "@/components/ui/SnackbarProvider";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import { LoadingOverlay } from "@/components/ui/LoadingOverlay";
+import { CopyButton } from "@/components/ui/CopyButton";
 
 export type EditCustomer = {
   name: string;
@@ -28,6 +29,7 @@ export default function CustomerListPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [isFetching, setIsFetching] = useState(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState(""); // 検索用ステート
   const { showSnackbar } = useSnackbar();
@@ -35,11 +37,14 @@ export default function CustomerListPage() {
   // 1. データの取得
   const fetchCustomers = async () => {
     try {
+      setIsFetching(true);
       const res = await fetch("/api/customers");
       const data = await res.json();
       setCustomers(data);
     } catch (error) {
       showSnackbar("データの読み込みに失敗しました。", "error");
+    } finally {
+      setIsFetching(false);
     }
   };
 
@@ -117,6 +122,8 @@ export default function CustomerListPage() {
     }
   };
 
+  if (isFetching) return <LoadingOverlay text="顧客情報取得中..." />;
+
   return (
     <div className="bg-gray-50 min-h-screen">
       {/* サービスヘッダー (Sticky) */}
@@ -174,8 +181,9 @@ export default function CustomerListPage() {
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-600">
                         <div className="flex items-center gap-2">
-                          <Phone size={14} className="text-gray-300" />
-                          {c.phone}
+                          <Phone size={14} className="text-gray-300 shrink-0" />
+                          {c.phone || "-"}
+                          <CopyButton value={c.phone} />
                         </div>
                         <div className="flex items-center gap-2 mt-1">
                           <Mail size={14} className="text-gray-300" />
@@ -226,6 +234,7 @@ export default function CustomerListPage() {
                     <div className="flex items-center gap-3">
                       <Phone size={16} className="text-gray-400" />
                       {c.phone || "未登録"}
+                      <CopyButton value={c.phone} />
                     </div>
                     {c.email && (
                       <div className="flex items-center gap-3">

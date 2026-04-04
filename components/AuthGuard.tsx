@@ -30,7 +30,7 @@ function AuthGuardInner({ children, requiredRole }: AuthGuardProps) {
 
     if (requiredRole && user.role !== requiredRole) {
       hasRedirected.current = true;
-      router.replace(user.role === "admin" ? "/admin/dashboard" : `/orders/${user.uid}`);
+      router.replace(user.role === "admin" ? "/admin/dashboard" : `/orders/${user.id}`);
       return;
     }
   }, [user, loading, router, requiredRole]);

@@ -6,13 +6,13 @@ export async function POST(req: Request) {
   try {
     const { token } = await req.json();
 
-    // 1. まずトークンから UID を取得
+    // 1. まずトークンから ID を取得
     const decodedToken = await adminAuth.verifyIdToken(token);
-    const uid = decodedToken.uid;
+    const id = decodedToken.id;
 
     // 2. 🔥 ここが重要！DBから最新のユーザー情報を直接取得する
     // これにより、さっき CLI で付与した admin: true が確実に反映された状態で取得できます
-    const userRecord = await adminAuth.getUser(uid);
+    const userRecord = await adminAuth.getUser(id);
     const isAdmin = userRecord.customClaims?.admin === true;
 
     // 3. セッションCookieを作成
@@ -22,7 +22,7 @@ export async function POST(req: Request) {
     const res = NextResponse.json({
       ok: true,
       admin: isAdmin, // 最新の情報を返す
-      uid: uid,
+      id: id,
     });
 
     res.cookies.set("__session", sessionCookie, {

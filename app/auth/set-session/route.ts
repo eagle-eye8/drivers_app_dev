@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
 export async function POST(req: Request) {
-  const { token, uid, email, name } = await req.json();
+  const { token, id, email, name } = await req.json();
 
   const cookieStore = await cookies();
 
@@ -20,7 +20,7 @@ export async function POST(req: Request) {
   // ---------------------------
   // ② 非機密プロフィールを Cookie に保存（フロントでも読める）
   // ---------------------------
-  cookieStore.set("uid", uid, {
+  cookieStore.set("id", id, {
     httpOnly: false,
     secure: true,
     sameSite: "strict",

@@ -7,23 +7,18 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
 
-    const { customerId, assignedUid, reservationDate, notes, pickupWindow, items, amount } = body;
-
-    // routeGroupId 自動生成（日付 + 顧客ID）
-    const routeGroupId = `${customerId}-${reservationDate}`;
+    const { customerId, assignedEmployee, reservationDate, notes, items, amount } = body;
 
     const data = {
       customerId,
-      assignedUid: assignedUid ?? null,
+      assignedEmployee: assignedEmployee ?? null,
       reservationDate,
       notes: notes ?? "",
-      pickupWindow: pickupWindow ?? null,
       amount,
       paymentStatus: "unpaid",
-      status: assignedUid ? "assigned" : "pending",
+      status: assignedEmployee.id ? "assigned" : "pending",
       items,
       isMerged: true,
-      routeGroupId,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     };
@@ -32,7 +27,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true, id: docRef.id });
   } catch (error) {
-    console.error("注文作成エラー:", error);
     return NextResponse.json({ success: false, error: String(error) }, { status: 500 });
   }
 }

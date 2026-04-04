@@ -9,16 +9,18 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const date = searchParams.get("date");
     const status = searchParams.get("status");
+    const uid = searchParams.get("uid");
 
     let query: FirebaseFirestore.Query = adminDb.collection("orders");
 
     if (date) query = query.where("reservationDate", "==", date);
     if (status) query = query.where("status", "==", status);
+    if (uid) query = query.where("assignedEmployee.id", "==", uid);
 
     const ordersSnap = await query.orderBy("createdAt", "desc").get();
 
     /* ===== 担当者IDs ===== */
-    const employeeIds = Array.from(new Set(ordersSnap.docs.map((d) => d.data().assignedUid).filter(Boolean)));
+    const employeeIds = Array.from(new Set(ordersSnap.docs.map((d) => d.data().assignedEmployee?.id).filter(Boolean)));
 
     const employeesMap = new Map<string, any>();
 
@@ -49,8 +51,6 @@ export async function GET(req: Request) {
 
       const customer = data.customerId ? customersMap.get(data.customerId) : null;
 
-      const employee = data.assignedUid ? employeesMap.get(data.assignedUid) : null;
-
       return {
         id: doc.id,
         ...data,
@@ -62,12 +62,7 @@ export async function GET(req: Request) {
               location: customer.location,
             }
           : null,
-        assignedEmployee: employee
-          ? {
-              id: data.assignedUid,
-              name: employee.name,
-            }
-          : null,
+        assignedEmployee: data.assignedEmployee,
       };
     });
 
@@ -84,9 +79,9 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     const body = await req.json();
 
     // 🔹 担当者更新
-    if ("assignedUid" in body) {
+    if ("assignedEmployee" in body) {
       await adminDb.collection("orders").doc(id).update({
-        assignedUid: body.assignedUid,
+        assignedEmployee: body.assignedEmployee,
         updatedAt: FieldValue.serverTimestamp(),
       });
 
@@ -120,7 +115,6 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       return NextResponse.json({ success: true });
     }
   } catch (err) {
-    console.error("PATCH /api/orders/[id] error:", err);
     return NextResponse.json({ success: false }, { status: 500 });
   }
 }
