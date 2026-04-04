@@ -6,7 +6,7 @@ import { X } from 'lucide-react';
 type Field = {
   label: string;
   name: string;
-  type: 'text' | 'tel' | 'textarea';
+  type: 'text' | 'number' | 'tel'| 'textarea';
   placeholder?: string;
 };
 
@@ -29,7 +29,7 @@ export default function Modal({
 }: ModalProps) {
   const [formData, setFormData] = useState({});
 
-  // モーダルが開くたびに、データをリセット
+
   useEffect(() => {
     setFormData(initialData || {});
   }, [isOpen, initialData]);
