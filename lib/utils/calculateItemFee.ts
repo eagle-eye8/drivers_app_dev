@@ -3,7 +3,7 @@ import prices from "../constants/priceTable/shippingPrices.json";
 import areaMapping from "../constants/priceTable/areaMapping.json";
 
 // 型定義の整理
-type ShippingType = "normal" | "chilled" | "heavy";
+type KindType = "normal" | "chilled" | "heavy";
 
 interface CalculationResult {
   unitPrice: number;        // 顧客請求単価

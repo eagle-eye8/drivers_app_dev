@@ -14,7 +14,7 @@ import useSWR from "swr";
 
 const PickupModal = dynamic(
   () =>
-    import("@/components/pickups/PickupModal").then((m) => ({
+    import("@/components/PickupModal/index").then((m) => ({
       default: m.PickupModal,
     })),
   { ssr: false },
@@ -38,7 +38,7 @@ export default function IndividualOrdersPage() {
 
   useEffect(() => {
     const preload = () => {
-      import("@/components/pickups/PickupModal");
+      import("@/components/PickupModal/index");
       import("@/components/ui/DailySummaryModal");
       import("@/components/ClosingDayModal");
     };

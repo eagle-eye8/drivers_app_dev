@@ -4,7 +4,7 @@ import { ORDER_STATUS_META } from "@/lib/orderStatus";
 import { OrderWithCustomer } from "@/types/orderWithCustomer";
 import { MapPin, NotebookPen, Package, UserPlus } from "lucide-react"; // アイコンを使うとよりリッチになります
 import { useState } from "react";
-import { PickupModal } from "../pickups/PickupModal";
+import { PickupModal } from "../PickupModal";
 import { useSnackbar } from "../ui/SnackbarProvider";
 import { AssignStaffModal } from "./AssignStaffModal";
 
