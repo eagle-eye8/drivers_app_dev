@@ -21,7 +21,8 @@
 /build
 
 # マイグレーション用スクリプト
-/script/
+/scripts/
+/app/api/migrate/route.ts
 
 # misc
 .DS_Store
