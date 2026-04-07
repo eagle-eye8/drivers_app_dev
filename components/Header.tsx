@@ -4,7 +4,7 @@ import { useAuth } from "@/app/providers/AuthProvider";
 import { auth } from "@/lib/firebase";
 import { ClipboardDocumentListIcon, HomeIcon, UsersIcon } from "@heroicons/react/24/outline";
 import { signOut } from "firebase/auth";
-import { ChartNoAxesCombined, Menu, ShieldCheck, UserIcon, X } from "lucide-react";
+import { ChartNoAxesCombined, Menu, UserStar, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -58,16 +58,16 @@ export default function Header() {
           <div className="relative w-16 h-14 md:w-20 md:h-17 group-hover:scale-105 transition-transform duration-300">
             <Image src="/spirit.webp" alt="Spirit Logo" fill className="object-contain p-0.5" sizes="80px" priority />
           </div>
-          {user?.id && (
-            <div className="flex items-center gap-3 py-2 px-3">
-              <div className={`p-1.5 rounded-xl shadow-sm ${isAdmin ? "bg-blue-600 text-white" : "bg-slate-600 text-white"}`}>{isAdmin ? <ShieldCheck size={20} /> : <UserIcon size={20} />}</div>
-              <div>
-                <p className="text-[9px] font-black text-slate-400 uppercase tracking-tighter leading-none mb-1">{isAdmin ? "管理者" : "ドライバー"}</p>
-                <h1 className="text-sm font-black text-slate-800 leading-none">{user?.name}</h1>
-              </div>
-            </div>
-          )}
         </Link>
+        {user?.id && (
+          <div className="flex items-center gap-3 py-2 px-3">
+            <div className={`p-1.5 rounded-xl shadow-sm ${isAdmin ? "bg-blue-600 text-white" : "bg-slate-600 text-white"}`}>{isAdmin && <UserStar size={17} />}</div>
+            <div>
+              <p className="text-[9px] font-black text-slate-400 uppercase tracking-tighter leading-none mb-1">{isAdmin ? "管理者" : "ドライバー"}</p>
+              <h1 className="text-sm font-black text-slate-800 leading-none">{user?.name}</h1>
+            </div>
+          </div>
+        )}
       </div>
       <div className="flex items-center gap-4">
         {user && (
@@ -100,10 +100,9 @@ export default function Header() {
           <div className="absolute right-0 top-0 h-full w-72 bg-white p-6 shadow-2xl animate-in slide-in-from-right duration-500 ease-out" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-8 pb-4 border-b border-slate-100">
               <div className="flex items-center gap-2">
-                <div className="bg-slate-900 p-1 rounded-lg">
-                  <Image src="/spirit.webp" alt="Logo" width={24} height={24} className="brightness-200" />
+                <div className="bg-white p-1 rounded-lg flex items-center justify-center">
+                  <Image src="/spirit.webp" alt="Logo" width={58} height={38} className="mix-blend-mode-multiply" />
                 </div>
-                <span className="text-xl font-black italic tracking-tighter text-slate-900 uppercase">Spirit</span>
               </div>
               <button onClick={() => setMenuOpen(false)} className="p-2 bg-slate-50 rounded-full">
                 <X size={20} />
