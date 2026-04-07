@@ -20,6 +20,10 @@
 # production
 /build
 
+# マイグレーション用スクリプト
+/scripts/
+/app/api/migrate/route.ts
+
 # misc
 .DS_Store
 *.pem
