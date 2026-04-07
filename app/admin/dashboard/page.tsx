@@ -1,23 +1,25 @@
 "use client";
 
-import useSWR from "swr";
 import { useAuth } from "@/app/providers/AuthProvider";
-import CreateCustomerModal from "@/components/customers/CreateCustomerModal";
+import CustomerModal from "@/components/customers/CustomerModal";
 import CreateOrderModal from "@/components/orders/CreateOrderModal";
 import DailySummaryAdminModal from "@/components/ui/DailySummaryAdminModal";
+import { LoadingOverlay } from "@/components/ui/LoadingOverlay";
 import ProgressCircle from "@/components/ui/ProgressCircle";
+import { useSnackbar } from "@/components/ui/SnackbarProvider";
 import { getJstDateString } from "@/lib/utils/date";
 import { DashboardEmployee, OrderWithCustomer } from "@/types/orderWithCustomer";
 import { FileUser, ListPlus, PlusIcon, UserIcon } from "lucide-react";
 import Link from "next/link";
-import { LoadingOverlay } from "@/components/ui/LoadingOverlay";
 import { useMemo, useState } from "react";
+import useSWR from "swr";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 export default function AdminDashboard() {
   const today = getJstDateString();
-  const { user, loading: authLoading } = useAuth();
+  const { user } = useAuth();
+  const { showSnackbar } = useSnackbar();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
@@ -25,7 +27,7 @@ export default function AdminDashboard() {
   const [isSummaryOpen, setIsSummaryOpen] = useState(false);
   const isAdmin = user?.role === "admin";
 
-  const { data, isLoading, error } = useSWR(isAdmin ? `/api/dashboard?date=${today}` : null, fetcher, {
+  const { data, isLoading } = useSWR(isAdmin ? `/api/dashboard?date=${today}` : null, fetcher, {
     revalidateOnFocus: false,
     dedupingInterval: 60000,
     fallbackData: { success: false, data: { todayOrders: [], employees: [], kpi: { orderCount: 0, pendingCount: 0, totalAmount: 0 } } },
@@ -38,6 +40,20 @@ export default function AdminDashboard() {
     return { completed, total };
   }, [todayOrders]);
 
+  const handleCreateCustomer = async (formData: any) => {
+    try {
+      const res = await fetch("/api/customers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+      if (!res.ok) throw new Error();
+      showSnackbar("顧客登録が完了しました", "success");
+      setIsCustomerModalOpen(false);
+    } catch (error) {
+      showSnackbar("顧客登録に失敗しました", "error");
+    }
+  };
   if (isLoading) {
     return <LoadingOverlay text="データを読み込み中..." />;
   }
@@ -80,7 +96,6 @@ export default function AdminDashboard() {
         </div>
       </section>
 
-      {/* FABとモーダル類（省略なし） */}
       <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
         {isMenuOpen && <div className="fixed inset-0 bg-slate-900/20 backdrop-blur-[2px] z-[-1]" onClick={() => setIsMenuOpen(false)} />}
         <div className={`flex flex-col items-end gap-3 transition-all duration-300 ${isMenuOpen ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"}`}>
@@ -127,7 +142,7 @@ export default function AdminDashboard() {
       </div>
 
       {isOrderModalOpen && <CreateOrderModal isOpen={isOrderModalOpen} onClose={() => setIsOrderModalOpen(false)} employees={employees} />}
-      {isCustomerModalOpen && <CreateCustomerModal isOpen={isCustomerModalOpen} onClose={() => setIsCustomerModalOpen(false)} />}
+      {isCustomerModalOpen && <CustomerModal isOpen={isCustomerModalOpen} onClose={() => setIsCustomerModalOpen(false)} onSave={handleCreateCustomer} initialData={null} />}
       {isSummaryOpen && <DailySummaryAdminModal onClose={() => setIsSummaryOpen(false)} orders={todayOrders} />}
     </div>
   );
