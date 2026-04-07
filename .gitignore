@@ -20,6 +20,9 @@
 # production
 /build
 
+# マイグレーション用スクリプト
+/script/
+
 # misc
 .DS_Store
 *.pem
