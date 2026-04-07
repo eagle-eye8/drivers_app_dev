@@ -27,7 +27,7 @@ export type Customer = {
   phones: CustomerPhone[];
   address: string;
   location: { lat: number; lng: number } | null;
-  searchIndex: string;
+  searchIndex?: string;
   createdAt: string;
   updatedAt: string;
 };
