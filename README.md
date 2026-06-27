@@ -1,36 +1,80 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# リアルタイム集荷・運行管理システム（Drivers App）
 
-## Getting Started
+集荷業務の現場における情報を一元化し、メンバー間でリアルタイムに情報共有・進捗管理を行うためのWebシステムです。電話受付からドライバーへの指示、ドラッグ＆ドロップによる担当者アサイン、ルート検索、料金計算、売上集計、日次締め作業までを一気通貫で効率化します。
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 🚀 プロダクト概要
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+本システムは、集荷業務を行う小〜中規模の運送事業者や出張買取サービスなどを想定した、リアルタイム業務効率化システムです。
+従来、アナログ（紙や電話、ホワイトボード）で発生していた伝達ミスや、手計算による料金ミスの削減、管理者の締め作業の負担軽減を目的として開発しました。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 👥 想定ユーザー・ロール
+1. **オペレーター（集計係）**: 電話注文の受付・入力、ドライバーへの担当アサイン（直感的なドラッグ＆ドロップ操作）、リアルタイムでの売上確認・締め作業。
+2. **集荷ドライバー**: 自身にアサインされた注文の確認、ルート検索、現場での集荷入力（サイズ選択・自動料金計算・ステータス更新）、日次の経費入力。
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## ✨ 搭載機能
 
-To learn more about Next.js, take a look at the following resources:
+### 🏢 オペレーター・管理者向け
+- **ダッシュボード**: `Recharts` を活用した、1日のタスク進捗状況（未着手・進行中・完了）およびリアルタイム売上の視覚的集計表示。
+- **顧客管理・検索**: 顧客氏名や電話番号による高速なインデックス検索。
+- **集荷注文管理**: 新規注文の作成、およびドライバーへの担当者アサイン。
+- **直感的なアサインUI**: `@dnd-kit` を用いた、ドラッグ＆ドロップによるスムーズな配車・担当者アサイン操作。
+- **日次集計・締め作業**: 完了済み注文の履歴確認、経費（ガソリン代等）の精算、売上集計。
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 🚚 ドライバー向け
+- **担当注文一覧**: 自身にアサインされた集荷タスクのみを時系列で一覧表示。
+- **マップ・ルート検索**: Google Maps と連携した、集荷場所までの注文ごと、または一括でのルートナビゲーション。
+- **スマート集荷入力**: 現場で荷物サイズ・種別を選択するだけで、料金を自動計算して顧客へ提示。
+- **ステータス自動連携**: Firebaseのリアルタイム同期を活かし、集荷完了と同時に管理者のダッシュボードが即時更新。
+- **経費入力**: 1日の業務終了時にガソリン代等の経費を登録可能。
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+## 🛠 技術スタック
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### フロントエンド / バックエンド
+- **Framework**: Next.js (v16.1.6), React (v19.2.1)
+- **Language**: TypeScript (v5.9.3)
+- **Styling**: Tailwind CSS (v4.1.17)
+- **State Management / Data Fetching**: SWR (v2.3.7)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### データベース / インフラ / 認証
+- **BaaS**: Firebase (v12.10.0), Firebase Admin SDK (v10.3.0)
+  - データのリアルタイム同期、オペレーターとドライバーのロールベース認証・管理を実現。
+
+### 主要ライブラリ
+- **UIコンポーネント**: `@headlessui/react`, `@radix-ui/react-dialog`（アクセシビリティ担保）
+- **インタラクション**: `@dnd-kit/core`, `@dnd-kit/sortable`（アサイン画面のドラッグ＆ドロップ制御）
+- **データ可視化**: `recharts`（ダッシュボードのグラフ描画）
+- **日付操作**: `date-fns`
+
+---
+
+## 💡 技術的アプローチと工夫した点
+
+### 1. 現場のUXに寄り添った「自動料金計算機能」と直感的な操作性
+現場でのドライバーの誤請求を防ぐため、荷物の「サイズ」と「種別」を画面上でタップするだけで、即座に料金が確定するロジックを実装しました。また、管理者側のアサイン作業を極限までシンプルにするため、`@dnd-kit` を用いたドラッグ＆ドロップによる配車インターフェースを採用し、実務での使いやすさにこだわりました。
+
+### 2. BaaS（Firebase）を活かしたリアルタイム状態管理
+ドライバーが現場で「集荷完了」を押した瞬間に、事務所にいる管理者のダッシュボード（進捗グラフや当日の売上金額）へ即時反映される設計を意識しました。これにより、現場と管理間の無駄な電話連絡を大幅に削減しています。
+
+### 3. 【現場発の改善】住所非特定地域に対応する「緯度経度ピンポイント指定機能」
+一般的な住所検索だけではGoogle Mapで正確な位置（新築の現場、大型施設の特定の搬入口、番地が曖昧な地域など）が表示されず、ドライバーが迷うという実現場の課題に直面しました。
+そこで、住所だけでなく**マップ上の任意の場所から直接「緯度経度」を取得・設定できる機能**を実装。どのドライバーが担当になっても、初回から迷わずピンポイントで現地へ到着できる仕組みを構築し、運行効率の大幅な向上とドライバーの心理的負担の軽減を実現しました。
+
+---
+
+## 🚧 今後の展望と課題へのアプローチ（技術選考向け）
+
+開発にあたり、単に機能を実装するだけでなく、**「ユーザー層のITリテラシー」**と**「予算システム（運用コスト）」**の観点からビジネス要件を検討し、あえて現状の仕様に落とし込んでいます。
+
+### ① 注文導線のデジタル化とユーザーへの配慮
+- **現状の課題**: Web注文フォームへの完全移行を検討しましたが、現顧客のメイン層が高齢者であり、急なデジタルシフトは顧客離れを起こすリスクがありました。
+- **今後の対策**: 利便性を最優先し「電話受付」を残しつつ、裏側でのオペレーターの手入力を減らすため、**IVR（自動音声応答システム）による自動注文受付**や、段階的なWeb注文機能の導入を検討しています。
+
+### ② コスト最適化を意識したルート検索
+- **現状の課題**: Google Route APIを活用した「AIによる自動ルート最適化」を検討しましたが、従量課金コストの観点から、導入企業の予算規模に合わせた費用対効果を慎重に判断しました。
+- **今後の対策**: 現状は「Google Mapへのシームレスな遷移」を提供し、ドライバーの土地勘による最適化に委ねることでランニングコストを最小限に抑えています。今後は配送密度に合わせて、オープンソースの経路探索エンジン（OSRMなど）を活用したコストの抑えられる独自ルート最適化の検証を行う予定です。
